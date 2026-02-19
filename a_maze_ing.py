@@ -1,7 +1,8 @@
 import sys
 from icecream import ic
 from typing import Callable, Any
-from .maze import config_parser
+from maze.config_parser import parse_config
+
 
 
 if __name__ == "__main__":
@@ -12,7 +13,7 @@ if __name__ == "__main__":
                 not sys.argv[1].lower().endswith(".txt")):
             raise Exception(err_message)
 
-        config_parser(sys.argv[1])
+        parse_config(sys.argv[1])
 
     except FileNotFoundError as e:
         print(e)
