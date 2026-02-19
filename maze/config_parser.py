@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 from pydantic import Field, model_validator
 from typing import Tuple
@@ -26,9 +25,15 @@ class MazeConfig:
         errors = []
 
         if (entry_x > self.width or entry_y > self.height):
-            errors.append(f"Entry {self.entry} out of the limits: ({self.width}, {self.height})")
+            errors.append(
+                f"Entry {self.entry} out of the limits:"
+                f" ({self.width}, {self.height})"
+                )
         if (exit_x > self.width or exit_y > self.height):
-            errors.append(f"Exit {self.exit} out of the limits: ({self.width}, {self.height})")
+            errors.append(
+                f"Exit {self.exit} out of the limits:"
+                f" ({self.width}, {self.height})"
+                )
 
         if errors:
             raise ConfigError("; ".join(errors))
@@ -40,17 +45,18 @@ def parse_config(path: str) -> MazeConfig:
     try:
         with open(path, "r") as f:
             data = f.read().splitlines()
-    except FileNotFoundError:
-        print("Error....")
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return None
 
     config_dict = {}
     for line in data:
         if not line.strip() or line.startswith("#"):
             continue
-        key, value = line.split("=")
-        key.strip().upper()
+        key, value = line.split("=", 1)
+        key = key.strip().upper()
         value = value.strip()
-        
+
         if key in ["WIDTH", "HEIGHT"]:
             value = int(value)
         elif key in ["ENTRY", "EXIT"]:
@@ -58,11 +64,7 @@ def parse_config(path: str) -> MazeConfig:
         elif key == "PERFECT":
             value = value.lower() == "true"
 
-        
         config_dict[key.lower()] = value
-        
+
     print(config_dict)
     return MazeConfig(**config_dict)
-
-
-parse_config("config.txt")
