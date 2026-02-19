@@ -45,15 +45,16 @@ def parse_config(path: str) -> MazeConfig:
     try:
         with open(path, "r") as f:
             data = f.read().splitlines()
-    except FileNotFoundError:
-        print("Error....")
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+        return None
 
     config_dict = {}
     for line in data:
         if not line.strip() or line.startswith("#"):
             continue
-        key, value = line.split("=")
-        key.strip().upper()
+        key, value = line.split("=", 1)
+        key = key.strip().upper()
         value = value.strip()
 
         if key in ["WIDTH", "HEIGHT"]:
@@ -67,6 +68,3 @@ def parse_config(path: str) -> MazeConfig:
 
     print(config_dict)
     return MazeConfig(**config_dict)
-
-
-parse_config("config.txt")
