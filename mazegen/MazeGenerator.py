@@ -58,7 +58,6 @@ class MazeGenerator:
                    movs: tuple[str, ...] = (),
                    path: tuple[tuple, ...] = ()) -> bool:
 
-        ic(path)
         if curr_coor == exit:
             return True
         if move is not None:
@@ -78,6 +77,81 @@ class MazeGenerator:
             for move in moves
         )
 
+    def render_maze(self, maze: dict[tuple, list[int]], width: int,
+                    height: int) -> None:
+        maze_chars: dict = {
+            "0000": ' ',
+            "0011": '┐',
+            "0110": '┌',
+            "1100": '└',
+            "1001": '┘',
+            "0111": '┬',
+            "1101": '┴',
+            "1010": '│',
+            "0101": '─',
+            "1011": '┤',
+            "1110": '├',
+            "1111": '┼'
+        }
+
+        parse_coor: dict[tuple[int, int], list[int]] = {}
+        for y in range(height):
+            for x in range(width):
+                N = self.maze[x, y - 1][3] if y - 1 >= 0 else 0
+                E = self.maze[x, y][0]
+                S = self.maze[x, y][3]
+                W = self.maze[x - 1, y][0] if x - 1 >= 0 else 0
+
+                parse_coor[x, y] = [N, E, S, W]
+
+        for x in range(width):
+            N = maze[x, height - 1][3]
+            E = 1 if x != width else 0
+            S = 0
+            W = 1 if x != 0 else 0
+
+            parse_coor[x, height] = [N, E, S, W]
+
+        for y in range(height):
+            N = 1 if y != 0 else 0
+            E = 0
+            S = 1
+            W = maze[width - 1, y][0]
+
+            parse_coor[width, y] = [N, E, S, W]
+
+        parse_coor[width, height] = [1, 0, 0, 1]
+
+        parsed_coor = {}
+        for coor in parse_coor:
+            key = ''.join(str(n) for n in parse_coor[coor])
+            parsed_coor[coor] = maze_chars[key] if key in maze_chars else ' '
+
+        maze_: str = ""
+        for y in range(height + 1):
+            for x in range(width + 1):
+                vertex = parsed_coor[x, y]
+                if parse_coor[x, y][1] == 1:
+                    wall = "───"
+                else:
+                    wall = "   "
+                maze_ += vertex + wall
+
+            maze_ += '\n'
+
+            for x in range(width + 1):
+                if parse_coor[x, y][2] == 1:
+                    wall = '│'
+                else:
+                    wall = ' '
+
+                maze_ += wall + "   "
+
+            maze_ += '\n'
+
+        print(maze_)
+
 
 maze_gen = MazeGenerator()
 ic(maze_gen.solve_maze((0, 0), (7, 7)))
+maze_gen.render_maze(MazeGenerator.maze, 8, 8)
