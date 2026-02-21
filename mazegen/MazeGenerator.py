@@ -1,18 +1,27 @@
 from icecream import ic
 from typing import Callable
 from enum import Enum
+import time
+import sys
 
 
 class MazeGenerator:
     maze: dict[tuple, list[int]] = {
         (0,0): [1,0,0,1], (1,0): [1,0,1,0], (2,0): [1,1,0,0], (3,0): [1,0,1,1], (4,0): [1,0,1,0], (5,0): [1,0,0,0], (6,0): [1,1,0,0], (7,0): [1,1,0,1],
-        (0,1): [0,1,0,1], (1,1): [1,0,0,1], (2,1): [0,1,1,0], (3,1): [1,0,0,1], (4,1): [1,1,0,0], (5,1): [0,1,1,0], (6,1): [0,0,1,1], (7,1): [0,1,1,1],
+        (0,1): [0,1,0,1], (1,1): [1,0,0,1], (2,1): [0,1,1,0], (3,1): [1,0,0,1], (4,1): [1,0,0,0], (5,1): [0,1,1,0], (6,1): [0,0,1,1], (7,1): [0,1,1,1],
         (0,2): [0,0,0,1], (1,2): [0,1,1,0], (2,2): [1,0,0,1], (3,2): [0,1,1,0], (4,2): [0,0,1,1], (5,2): [1,0,0,0], (6,2): [1,1,0,0], (7,2): [1,1,0,1],
-        (0,3): [0,1,0,1], (1,3): [1,0,0,1], (2,3): [0,1,1,0], (3,3): [1,0,0,1], (4,3): [1,0,0,0], (5,3): [0,1,1,0], (6,3): [0,0,1,1], (7,3): [0,1,0,1],
+        (0,3): [0,1,0,1], (1,3): [1,0,0,1], (2,3): [0,1,0,0], (3,3): [1,0,0,1], (4,3): [1,0,0,0], (5,3): [0,1,1,0], (6,3): [0,0,0,1], (7,3): [0,1,0,1],
         (0,4): [0,0,0,1], (1,4): [0,1,0,0], (2,4): [0,0,0,1], (3,4): [0,1,1,0], (4,4): [0,1,0,1], (5,4): [1,0,0,1], (6,4): [0,1,0,0], (7,4): [0,1,1,1],
-        (0,5): [0,1,0,1], (1,5): [0,0,0,0], (2,5): [0,1,0,0], (3,5): [1,0,0,1], (4,5): [0,1,0,0], (5,5): [0,1,1,1], (6,5): [0,0,1,1], (7,5): [1,1,0,1],
-        (0,6): [0,0,0,1], (1,6): [0,1,1,0], (2,6): [0,1,1,1], (3,6): [0,0,0,1], (4,6): [0,1,1,0], (5,6): [1,1,0,1], (6,6): [0,1,1,0], (7,6): [0,1,0,1],
+        (0,5): [0,0,0,1], (1,5): [0,0,0,0], (2,5): [0,1,0,0], (3,5): [1,0,0,1], (4,5): [0,1,0,0], (5,5): [0,1,1,1], (6,5): [0,0,0,1], (7,5): [1,1,0,1],
+        (0,6): [0,0,0,1], (1,6): [0,1,1,0], (2,6): [0,1,1,1], (3,6): [0,0,0,1], (4,6): [0,1,1,0], (5,6): [1,0,0,1], (6,6): [0,1,1,0], (7,6): [0,1,0,1],
         (0,7): [0,1,1,1], (1,7): [1,0,1,1], (2,7): [1,1,1,0], (3,7): [0,0,1,1], (4,7): [1,0,1,0], (5,7): [0,0,1,0], (6,7): [1,0,1,0], (7,7): [1,1,1,0],
+    }
+
+    maze1 = {
+        (0, 0): [1, 1, 0, 1],
+        (1, 0): [1, 1, 0, 1],
+        (0, 1): [0, 0, 1, 1],
+        (1, 1): [0, 1, 1, 0]
     }
 
     class MOVES(Enum):
@@ -80,19 +89,30 @@ class MazeGenerator:
     def render_maze(self, maze: dict[tuple, list[int]], width: int,
                     height: int) -> None:
         maze_chars: dict = {
-            "0000": ' ',
-            "0011": '┐',
-            "0110": '┌',
-            "1100": '└',
-            "1001": '┘',
-            "0111": '┬',
-            "1101": '┴',
-            "1010": '│',
-            "0101": '─',
-            "1011": '┤',
-            "1110": '├',
-            "1111": '┼'
+            (0, 0, 0, 0): ' ',
+            (0, 0, 1, 1): '┐',
+            (0, 1, 1, 0): '┌',
+            (1, 1, 0, 0): '└',
+            (1, 0, 0, 1): '┘',
+            (0, 1, 1, 1): '┬',
+            (1, 1, 0, 1): '┴',
+            (1, 0, 1, 0): '│',
+            (0, 1, 0, 1): '─',
+            (1, 0, 1, 1): '┤',
+            (1, 1, 1, 0): '├',
+            (1, 1, 1, 1): '┼'
         }
+
+        def print_maze(maze: list[str], first_frame: bool) -> None:
+
+            if not first_frame:
+                sys.stdout.write("\033[F" * (len(maze)))
+
+            for row in maze:
+                time.sleep(0.0002)
+                sys.stdout.write("".join(row) + '\n')
+
+            sys.stdout.flush()
 
         parse_coor: dict[tuple[int, int], list[int]] = {}
         for y in range(height):
@@ -102,15 +122,15 @@ class MazeGenerator:
                 S = self.maze[x, y][3]
                 W = self.maze[x - 1, y][0] if x - 1 >= 0 else 0
 
-                parse_coor[x, y] = [N, E, S, W]
+                parse_coor[x, y] = (N, E, S, W)
 
         for x in range(width):
             N = maze[x, height - 1][3]
-            E = 1 if x != width else 0
+            E = 1
             S = 0
             W = 1 if x != 0 else 0
 
-            parse_coor[x, height] = [N, E, S, W]
+            parse_coor[x, height] = (N, E, S, W)
 
         for y in range(height):
             N = 1 if y != 0 else 0
@@ -118,40 +138,42 @@ class MazeGenerator:
             S = 1
             W = maze[width - 1, y][0]
 
-            parse_coor[width, y] = [N, E, S, W]
+            parse_coor[width, y] = (N, E, S, W)
 
-        parse_coor[width, height] = [1, 0, 0, 1]
+        parse_coor[width, height] = (1, 0, 0, 1)
 
         parsed_coor = {}
         for coor in parse_coor:
-            key = ''.join(str(n) for n in parse_coor[coor])
+            key = parse_coor[coor]
             parsed_coor[coor] = maze_chars[key] if key in maze_chars else ' '
 
-        maze_: str = ""
-        for y in range(height + 1):
-            for x in range(width + 1):
-                vertex = parsed_coor[x, y]
-                if parse_coor[x, y][1] == 1:
-                    wall = "───"
-                else:
-                    wall = "   "
-                maze_ += vertex + wall
+        maze_grid: list[str] = [[' '] * ((width + 1) + (width * 3))
+                                for _ in range(height * 2 + 1)]
 
-            maze_ += '\n'
+        first_frame = True
+        for coor in parsed_coor:
+            x, y = coor
+            x_ = x * 4
+            y_ = y * 2
 
-            for x in range(width + 1):
-                if parse_coor[x, y][2] == 1:
-                    wall = '│'
-                else:
-                    wall = ' '
+            maze_grid[y * 2][x * 4] = parsed_coor[coor]
 
-                maze_ += wall + "   "
-
-            maze_ += '\n'
-
-        print(maze_)
-
+            if coor in maze:
+                if maze[x, y][0] == 1:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_][x_ + w] = '─'
+                if maze[x, y][1] == 1:
+                    maze_grid[y_ + 1][x_ + 4] = '│'
+                if maze[x, y][2] == 1:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_ + 2][x_ + w] = '─'
+                if maze[x, y][3] == 1:
+                    maze_grid[y_ + 1][x_] = '│'
+            print_maze(maze_grid, first_frame)
+            first_frame = False
 
 maze_gen = MazeGenerator()
 ic(maze_gen.solve_maze((0, 0), (7, 7)))
+#ic(maze_gen.solve_maze((0, 0), (1, 1)))
 maze_gen.render_maze(MazeGenerator.maze, 8, 8)
+#maze_gen.render_maze(MazeGenerator.maze, 2, 2)
