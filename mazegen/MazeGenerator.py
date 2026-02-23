@@ -8,6 +8,15 @@ import random
 
 class MazeGenerator:
 
+    COLORS = [
+        "\033[91m",
+        "\033[92m",
+        "\033[93m",
+        "\033[94m",
+        "\033[95m",
+        "\033[96m",
+    ]
+
     class MOVES(Enum):
         N = 'N'
         E = 'E'
@@ -123,6 +132,7 @@ class MazeGenerator:
             (1, 1, 1, 0): '├',
             (1, 1, 1, 1): '┼'
         }
+
 
         def print_maze(maze: list[str], first_frame: bool) -> None:
             for row in maze:

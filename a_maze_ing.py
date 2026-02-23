@@ -3,40 +3,14 @@ import random
 from maze.config_parser import parse_config
 from mazegen.MazeGenerator import MazeGenerator
 
-
-def clear():
-    sys.stdout.write("\033[2J\033[H")
-    sys.stdout.flush()
-
-
-def run_once(config):
+def generate_maze(config):
     maze = MazeGenerator(config)
-    solved = maze.solve_maze(config.entry, config.exit)
-
-    print()
-    print("Solved:", solved)
-    maze.render_maze(maze.maze, config.width, config.height)
-
-def run_multiple(config, times=5):
-    for i in range(times):
-        seed = random.randint(0, 100_000)
-        config.seed = seed
-        random.seed(seed)
-
-        maze = MazeGenerator(config)
-        solved = maze.solve_maze(config.entry, config.exit)
-
-        print()
-        print(f"Run {i+1}")
-        print("Seed:", seed)
-        print("Solved:", solved)
-
-        maze.render_maze(maze.maze, config.width, config.height)
+    maze = maze.generate()
+    return maze
 
 def main():
-    clear()
     if len(sys.argv) != 2 or not sys.argv[1].lower().endswith(".txt"):
-        print("Usage: python a_maze_ing.py config.txt")
+        print("Usage: python3 a_maze_ing.py config.txt")
         sys.exit(1)
 
     config_file = f"config/{sys.argv[1]}"
@@ -49,29 +23,29 @@ def main():
 
     while True:
         print()
-        print("=== A-MAZE-ING CLI ===")
-        print("1) Run once")
-        print("2) Run multiple seeds")
-        print("3) Exit")
+        print("=== A-Maze-Ing ===")
+        print("1. Re-generate a new maze")
+        print("2. Show/Hide path from entry to exit")
+        print("3. Rotate maze colors")
+        print("4. Quit")
+        print("Choice? (1-4):")
 
         choice = input("> ").strip()
 
         if choice == "1":
-            run_once(config)
-
+            maze = MazeGenerator(config)
+            maze.render_maze(config)
         elif choice == "2":
-            try:
-                times = int(input("How many runs? ").strip())
-            except ValueError:
-                times = 5
-            run_multiple(config, times)
-
+            ...
         elif choice == "3":
+            ...
+        elif choice == "4":
             print("Bye!")
             break
 
         else:
             print("Invalid option. Try again.")
+
 
 if __name__ == "__main__":
     main()
