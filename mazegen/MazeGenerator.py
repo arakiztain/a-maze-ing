@@ -1,19 +1,26 @@
 from icecream import ic
 from typing import Callable
 from enum import Enum
+import random
+import time
+import sys
 
 
 class MazeGenerator:
-    maze: dict[tuple, list[int]] = {
-        (0,0): [1,0,0,1], (1,0): [1,0,1,0], (2,0): [1,1,0,0], (3,0): [1,0,1,1], (4,0): [1,0,1,0], (5,0): [1,0,0,0], (6,0): [1,1,0,0], (7,0): [1,1,0,1],
-        (0,1): [0,1,0,1], (1,1): [1,0,0,1], (2,1): [0,1,1,0], (3,1): [1,0,0,1], (4,1): [1,1,0,0], (5,1): [0,1,1,0], (6,1): [0,0,1,1], (7,1): [0,1,1,1],
-        (0,2): [0,0,0,1], (1,2): [0,1,1,0], (2,2): [1,0,0,1], (3,2): [0,1,1,0], (4,2): [0,0,1,1], (5,2): [1,0,0,0], (6,2): [1,1,0,0], (7,2): [1,1,0,1],
-        (0,3): [0,1,0,1], (1,3): [1,0,0,1], (2,3): [0,1,1,0], (3,3): [1,0,0,1], (4,3): [1,0,0,0], (5,3): [0,1,1,0], (6,3): [0,0,1,1], (7,3): [0,1,0,1],
-        (0,4): [0,0,0,1], (1,4): [0,1,0,0], (2,4): [0,0,0,1], (3,4): [0,1,1,0], (4,4): [0,1,0,1], (5,4): [1,0,0,1], (6,4): [0,1,0,0], (7,4): [0,1,1,1],
-        (0,5): [0,1,0,1], (1,5): [0,0,0,0], (2,5): [0,1,0,0], (3,5): [1,0,0,1], (4,5): [0,1,0,0], (5,5): [0,1,1,1], (6,5): [0,0,1,1], (7,5): [1,1,0,1],
-        (0,6): [0,0,0,1], (1,6): [0,1,1,0], (2,6): [0,1,1,1], (3,6): [0,0,0,1], (4,6): [0,1,1,0], (5,6): [1,1,0,1], (6,6): [0,1,1,0], (7,6): [0,1,0,1],
-        (0,7): [0,1,1,1], (1,7): [1,0,1,1], (2,7): [1,1,1,0], (3,7): [0,0,1,1], (4,7): [1,0,1,0], (5,7): [0,0,1,0], (6,7): [1,0,1,0], (7,7): [1,1,1,0],
-    }
+    def __init__(self):
+        self.last_move = None
+        self.base_weight = 1
+        self.boost = 3
+        self.entry = None
+        self.exit = None
+        self.curr_coor = self.entry
+        self.width = None
+        self.height = None
+        self.unique_sol = None
+        self.path: tuple[tuple[int, int]] = ()
+        self.no_exit = []
+
+    maze: dict[tuple, list[int]] = {}
 
     class MOVES(Enum):
         N = 'N'
@@ -78,6 +85,159 @@ class MazeGenerator:
             for move in moves
         )
 
+    def maze_generation(self, width: int, height: int, unique_sol: bool,
+                        entry: tuple, exit: tuple):
+
+        self.entry = entry
+        self.exit = exit
+        self.width = width
+        self.height = height
+        self.unique_sol = unique_sol
+
+        def random_mov() -> MazeGenerator.MOVES:
+            weights = []
+
+            for move in self.MOVES:
+                if move == self.last_move:
+                    weights.append(self.base_weight * self.boost)
+                else:
+                    weights.append(self.base_weight)
+
+            return random.choices(list(self.MOVES), weights)[0]
+
+        def add_walls(coor: tuple, mov: MazeGenerator.MOVES) -> None:
+
+            if coor not in self.maze:
+                walls: list[int | None] = [None, None, None, None]
+                x, y = coor
+                if (x, y - 1) in self.maze:
+                    walls[0] = self.maze[x, y - 1][2]
+                if (x + 1, y) in self.maze:
+                    walls[1] = self.maze[x + 1, y][3]
+                if (x, y + 1) in self.maze:
+                    walls[2] = self.maze[x, y + 1][0]
+                if (x - 1, y) in self.maze:
+                    walls[3] = self.maze[x - 1, y][1]
+            else:
+                ic(coor, mov)
+                walls = self.maze[coor]
+
+            match mov:
+                case self.MOVES.N:
+                    walls[0] = 0
+                case self.MOVES.E:
+                    walls[1] = 0
+                case self.MOVES.S:
+                    walls[2] = 0
+                case self.MOVES.W:
+                    walls[3] = 0
+
+            for i, wall in enumerate(walls):
+                if wall is None:
+                    walls[i] = 1
+
+            self.maze[coor] = walls
+
+        def valid_celd(coor: tuple) -> bool:
+            return (0 <= coor[0] <= self.width - 1 and
+                    0 <= coor[1] <= self.height - 1)
+
+        def valid_move(curr, mov, path):
+            next_coor = self.move(curr, mov)
+            return (next_coor not in path and valid_celd(next_coor)
+                    and next_coor not in self.no_exit)
+
+        def possible_moves(curr, path):
+            return [mov for mov in self.MOVES if valid_move(curr, mov, path)]
+
+        def path_generation(curr: tuple[int, int],
+                            path: tuple[tuple[int, int], ...] = (entry,)):
+
+            if curr == self.exit:
+                #ic(self.no_exit)
+                #ic("exit")
+                #ic(path)
+                return True
+            # if valid_celd(curr):
+            #     return
+            # if curr in path:
+            #     ic("repeated")
+            #     return
+
+            #mov = random_mov()
+            #ic(mov)
+
+            pos_moves: list = random.shuffle(possible_moves(curr, path))
+            pos_moves = possible_moves(curr, path)
+            random.shuffle(pos_moves)
+            #ic(pos_moves)
+            if not pos_moves:
+                # add_walls() with move as None. Add walls to every direction that doesn't have an adjacent celd
+                self.no_exit.append(curr)
+                return
+
+            for mov in pos_moves:
+                add_walls(curr, mov)
+                next_coor = self.move(curr, mov)
+                if path_generation(next_coor, path + (next_coor,)):
+                    return True
+                #self.maze.pop(curr)
+
+            add_walls(curr, mov)
+            self.no_exit.append(curr)
+            #self.maze.pop(curr)
+            return
+
+        path_generation(entry)
+        ic(self.no_exit)
+
+    def render_maze(self, maze: dict[tuple, list[int]], width: int,
+                    height: int) -> None:
+        def print_maze(maze: list[str], first_frame: bool) -> None:
+
+            if not first_frame:
+                    sys.stdout.write("\033[F" * (len(maze)))
+
+            for row in maze:
+                time.sleep(0.0002)
+                sys.stdout.write("".join(row) + '\n')
+
+            sys.stdout.flush()
+
+        maze_grid: list[str] = [[' '] * ((width + 1) + (width * 3))
+                                for _ in range(height * 2 + 1)]
+
+        red_sqr = "\033[31m⬛\033[0m"
+        maze_grid[(self.entry[1] * 2) + 1][(self.entry[0] * 4) + 2] = 'E'
+        maze_grid[(self.exit[1] * 2) + 1][(self.exit[0] * 4) + 2] = 'X'
+
+        first_frame = True
+        for coor in self.maze:
+            x, y = coor
+            x_ = x * 4
+            y_ = y * 2
+
+            #maze_grid[y * 2][x * 4] = parsed_coor[coor]
+
+            if coor in maze:
+                if maze[x, y][0] == 1:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_][x_ + w] = '─'
+                if maze[x, y][1] == 1:
+                    maze_grid[y_ + 1][x_ + 4] = '│'
+                if maze[x, y][2] == 1:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_ + 2][x_ + w] = '─'
+                if maze[x, y][3] == 1:
+                    maze_grid[y_ + 1][x_] = '│'
+            print_maze(maze_grid, first_frame)
+            first_frame = False
+
+
+
 
 maze_gen = MazeGenerator()
-ic(maze_gen.solve_maze((0, 0), (7, 7)))
+#ic(maze_gen.solve_maze((0, 0), (7, 7)))
+
+maze_gen.maze_generation(8, 8, True, (4, 4), (6, 6))
+maze_gen.render_maze(MazeGenerator.maze, 8, 8)
