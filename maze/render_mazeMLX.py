@@ -18,7 +18,7 @@ def load_maze(path):
     exit_line = lines[-2]
     path_line = lines[-1]
 
-    maze = [[int(c,16) for c in row] for row in maze_lines]
+    maze = [[int(c, 16) for c in row] for row in maze_lines]
     entry = tuple(map(int, entry_line.split(',')))
     exit_ = tuple(map(int, exit_line.split(',')))
     path = list(path_line.strip())
@@ -70,16 +70,16 @@ def draw_cell(buf, bpp, size_line, x0, y0, cell_value, color=None, format=0):
 def path_to_coords(entry, path):
     x, y = entry
     coords = [(x, y)]
-    move = {'N': (0,-1), 'E':(1,0), 'S':(0,1), 'W':(-1,0)}
+    move = {'N': (0, -1), 'E':(1, 0), 'S':(0, 1), 'W':(-1, 0)}
     for step in path:
         dx, dy = move[step]
         x += dx
         y += dy
-        coords.append((x,y))
+        coords.append((x, y))
     return coords
 
 def main() -> None:
-	maze, entry, exit_, path = load_maze("maze.txt")
+	maze, entry, exit_, path = load_maze("../maze.txt")
 	rows = len(maze)
 	cols = len(maze[0])
 	coords = path_to_coords(entry, path)

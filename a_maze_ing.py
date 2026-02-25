@@ -3,6 +3,7 @@ from icecream import ic
 from typing import Callable, Any
 from maze.config_parser import parse_config
 import maze.generator as generator
+import maze.render_mazeMLX as maze_render
 
 
 def main() -> None:
@@ -16,6 +17,7 @@ def main() -> None:
         r = parse_config(sys.argv[1])
         # vars convert a NameSpace to a dict
         generator.main(**vars(r))
+        maze_render()
 
     except FileNotFoundError as e:
         print(e)
