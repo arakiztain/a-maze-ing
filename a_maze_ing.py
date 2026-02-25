@@ -2,10 +2,10 @@ import sys
 from icecream import ic
 from typing import Callable, Any
 from maze.config_parser import parse_config
+import maze.generator as generator
 
 
-
-if __name__ == "__main__":
+def main() -> None:
     err_message: str = "No config txt file provided"
     try:
         if (len(sys.argv) != 2 or
@@ -13,7 +13,9 @@ if __name__ == "__main__":
                 not sys.argv[1].lower().endswith(".txt")):
             raise Exception(err_message)
 
-        parse_config(sys.argv[1])
+        r = parse_config(sys.argv[1])
+        # vars convert a NameSpace to a dict
+        generator.main(**vars(r))
 
     except FileNotFoundError as e:
         print(e)
@@ -23,3 +25,7 @@ if __name__ == "__main__":
         print(e)
     except Exception as e:
         print(f"Error: {e}")
+
+
+if __name__ == "__main__":
+    main()
