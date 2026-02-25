@@ -17,8 +17,9 @@ class MazeGenerator:
         self.width = None
         self.height = None
         self.unique_sol = None
-        self.path: tuple[tuple[int, int]] = ()
+        self.path: list[tuple[int, int]] = []
         self.no_exit = []
+        self.exit_found: bool = False
 
     maze: dict[tuple, list[int]] = {}
 
@@ -93,17 +94,7 @@ class MazeGenerator:
         self.width = width
         self.height = height
         self.unique_sol = unique_sol
-
-        def random_mov() -> MazeGenerator.MOVES:
-            weights = []
-
-            for move in self.MOVES:
-                if move == self.last_move:
-                    weights.append(self.base_weight * self.boost)
-                else:
-                    weights.append(self.base_weight)
-
-            return random.choices(list(self.MOVES), weights)[0]
+        self.path.append(entry)
 
         def add_walls(coor: tuple, mov: MazeGenerator.MOVES | None) -> None:
             if coor not in self.maze:
@@ -137,9 +128,6 @@ class MazeGenerator:
 
             self.maze[coor] = walls
 
-            # if coor == (4, 4):
-            #     ic(walls)
-
         def valid_celd(coor: tuple) -> bool:
             return (0 <= coor[0] <= self.width - 1 and
                     0 <= coor[1] <= self.height - 1)
@@ -149,37 +137,34 @@ class MazeGenerator:
             return (next_coor not in path and valid_celd(next_coor)
                     and next_coor not in self.no_exit)
 
-        def possible_moves(curr, path):
-            return [mov for mov in self.MOVES if valid_move(curr, mov, path)]
-
         def path_generation(curr: tuple[int, int],
                             path: tuple[tuple[int, int], ...]
                             = (entry,)) -> None:
 
             if curr == self.exit:
                 add_walls(curr, None)
+                self.exit_found = True
                 return
 
-            pos_moves: list = random.shuffle(possible_moves(curr, path))
-            pos_moves = possible_moves(curr, path)
-            random.shuffle(pos_moves)
+            moves: list = list(self.MOVES)
+            random.shuffle(moves)
 
-            if not pos_moves:
+            no_moves = True
+            for mov in moves:
+                if valid_move(curr, mov, self.path):
+                    no_moves = False
+                    add_walls(curr, mov)
+                    next_coor = self.move(curr, mov)
+                    self.path.append(next_coor)
+                    path_generation(next_coor, path + (next_coor,))
+
+            if no_moves:
                 add_walls(curr, None)
                 self.no_exit.append(curr)
-                return
 
-            for mov in pos_moves:
-                add_walls(curr, mov)
-                next_coor = self.move(curr, mov)
-                path_generation(next_coor, path + (next_coor,))
-
-            add_walls(curr, mov)
-            self.no_exit.append(curr)
             return
 
         path_generation(entry)
-        ic(self.maze)
 
     def render_maze(self, maze: dict[tuple, list[int]], width: int,
                     height: int) -> None:
@@ -273,13 +258,7 @@ class MazeGenerator:
             first_frame = False
 
 
-
-
 maze_gen = MazeGenerator()
 
-maze_gen.maze_generation(8, 8, True, (4, 4), (6, 6))
-maze_gen.render_maze(MazeGenerator.maze, 8, 8)
-#maze_gen.maze_generation(16, 16, True, (1, 1), (12, 12))
-#maze_gen.render_maze(MazeGenerator.maze, 16, 16)
-#maze_gen.maze_generation(16, 16, True, (1, 1), (20, 20))
-#maze_gen.render_maze(MazeGenerator.maze, 16, 16)
+maze_gen.maze_generation(16, 16, True, (0, 0), (12, 12))
+maze_gen.render_maze(MazeGenerator.maze, 16, 16)
