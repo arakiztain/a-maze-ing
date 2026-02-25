@@ -105,8 +105,7 @@ class MazeGenerator:
 
             return random.choices(list(self.MOVES), weights)[0]
 
-        def add_walls(coor: tuple, mov: MazeGenerator.MOVES) -> None:
-
+        def add_walls(coor: tuple, mov: MazeGenerator.MOVES | None) -> None:
             if coor not in self.maze:
                 walls: list[int | None] = [None, None, None, None]
                 x, y = coor
@@ -119,24 +118,27 @@ class MazeGenerator:
                 if (x - 1, y) in self.maze:
                     walls[3] = self.maze[x - 1, y][1]
             else:
-                ic(coor, mov)
                 walls = self.maze[coor]
 
-            match mov:
-                case self.MOVES.N:
-                    walls[0] = 0
-                case self.MOVES.E:
-                    walls[1] = 0
-                case self.MOVES.S:
-                    walls[2] = 0
-                case self.MOVES.W:
-                    walls[3] = 0
+            if mov:
+                match mov:
+                    case self.MOVES.N:
+                        walls[0] = 0
+                    case self.MOVES.E:
+                        walls[1] = 0
+                    case self.MOVES.S:
+                        walls[2] = 0
+                    case self.MOVES.W:
+                        walls[3] = 0
 
             for i, wall in enumerate(walls):
                 if wall is None:
                     walls[i] = 1
 
             self.maze[coor] = walls
+
+            # if coor == (4, 4):
+            #     ic(walls)
 
         def valid_celd(coor: tuple) -> bool:
             return (0 <= coor[0] <= self.width - 1 and
@@ -151,48 +153,51 @@ class MazeGenerator:
             return [mov for mov in self.MOVES if valid_move(curr, mov, path)]
 
         def path_generation(curr: tuple[int, int],
-                            path: tuple[tuple[int, int], ...] = (entry,)):
+                            path: tuple[tuple[int, int], ...]
+                            = (entry,)) -> None:
 
             if curr == self.exit:
-                #ic(self.no_exit)
-                #ic("exit")
-                #ic(path)
-                return True
-            # if valid_celd(curr):
-            #     return
-            # if curr in path:
-            #     ic("repeated")
-            #     return
-
-            #mov = random_mov()
-            #ic(mov)
+                add_walls(curr, None)
+                return
 
             pos_moves: list = random.shuffle(possible_moves(curr, path))
             pos_moves = possible_moves(curr, path)
             random.shuffle(pos_moves)
-            #ic(pos_moves)
+
             if not pos_moves:
-                # add_walls() with move as None. Add walls to every direction that doesn't have an adjacent celd
+                add_walls(curr, None)
                 self.no_exit.append(curr)
                 return
 
             for mov in pos_moves:
                 add_walls(curr, mov)
                 next_coor = self.move(curr, mov)
-                if path_generation(next_coor, path + (next_coor,)):
-                    return True
-                #self.maze.pop(curr)
+                path_generation(next_coor, path + (next_coor,))
 
             add_walls(curr, mov)
             self.no_exit.append(curr)
-            #self.maze.pop(curr)
             return
 
         path_generation(entry)
-        ic(self.no_exit)
+        ic(self.maze)
 
     def render_maze(self, maze: dict[tuple, list[int]], width: int,
                     height: int) -> None:
+        maze_chars: dict = {
+            (0, 0, 0, 0): ' ',
+            (0, 0, 1, 1): '┐',
+            (0, 1, 1, 0): '┌',
+            (1, 1, 0, 0): '└',
+            (1, 0, 0, 1): '┘',
+            (0, 1, 1, 1): '┬',
+            (1, 1, 0, 1): '┴',
+            (1, 0, 1, 0): '│',
+            (0, 1, 0, 1): '─',
+            (1, 0, 1, 1): '┤',
+            (1, 1, 1, 0): '├',
+            (1, 1, 1, 1): '┼'
+        }
+
         def print_maze(maze: list[str], first_frame: bool) -> None:
 
             if not first_frame:
@@ -204,6 +209,39 @@ class MazeGenerator:
 
             sys.stdout.flush()
 
+        parse_coor: dict[tuple[int, int], list[int]] = {}
+        for y in range(height):
+            for x in range(width):
+                N = self.maze[x, y - 1][3] if y - 1 >= 0 else 0
+                E = self.maze[x, y][0]
+                S = self.maze[x, y][3]
+                W = self.maze[x - 1, y][0] if x - 1 >= 0 else 0
+
+                parse_coor[x, y] = (N, E, S, W)
+
+        for x in range(width):
+            N = maze[x, height - 1][3]
+            E = 1
+            S = 0
+            W = 1 if x != 0 else 0
+
+            parse_coor[x, height] = (N, E, S, W)
+
+        for y in range(height):
+            N = 1 if y != 0 else 0
+            E = 0
+            S = 1
+            W = maze[width - 1, y][0]
+
+            parse_coor[width, y] = (N, E, S, W)
+
+        parse_coor[width, height] = (1, 0, 0, 1)
+        #ic(parse_coor)
+        parsed_coor = {}
+        for coor in parse_coor:
+            key = parse_coor[coor]
+            parsed_coor[coor] = maze_chars[key] if key in maze_chars else ' '
+
         maze_grid: list[str] = [[' '] * ((width + 1) + (width * 3))
                                 for _ in range(height * 2 + 1)]
 
@@ -212,12 +250,13 @@ class MazeGenerator:
         maze_grid[(self.exit[1] * 2) + 1][(self.exit[0] * 4) + 2] = 'X'
 
         first_frame = True
-        for coor in self.maze:
+        #ic(parsed_coor)
+        for coor in parsed_coor:
             x, y = coor
             x_ = x * 4
             y_ = y * 2
 
-            #maze_grid[y * 2][x * 4] = parsed_coor[coor]
+            maze_grid[y * 2][x * 4] = parsed_coor[coor]
 
             if coor in maze:
                 if maze[x, y][0] == 1:
@@ -237,7 +276,10 @@ class MazeGenerator:
 
 
 maze_gen = MazeGenerator()
-#ic(maze_gen.solve_maze((0, 0), (7, 7)))
 
 maze_gen.maze_generation(8, 8, True, (4, 4), (6, 6))
 maze_gen.render_maze(MazeGenerator.maze, 8, 8)
+#maze_gen.maze_generation(16, 16, True, (1, 1), (12, 12))
+#maze_gen.render_maze(MazeGenerator.maze, 16, 16)
+#maze_gen.maze_generation(16, 16, True, (1, 1), (20, 20))
+#maze_gen.render_maze(MazeGenerator.maze, 16, 16)
