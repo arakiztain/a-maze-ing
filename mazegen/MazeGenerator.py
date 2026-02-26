@@ -202,7 +202,7 @@ class MazeGenerator:
                     sys.stdout.write("\033[F" * (len(maze)))
 
             for row in maze:
-                time.sleep(0.0002)
+                #time.sleep(0.0002)
                 sys.stdout.write("".join(row) + '\n')
 
             sys.stdout.flush()
@@ -242,9 +242,44 @@ class MazeGenerator:
         maze_grid: list[str] = [[' '] * ((width + 1) + (width * 3))
                                 for _ in range(height * 2 + 1)]
 
+        def add_char(char: str, coor: tuple[int, int]) -> None:
+            maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
+
+        def add_arrows(path, movs):
+            for coor, mov in zip(path, movs):
+                match mov:
+                    case self.MOVES.N:
+                        arrow = '↑'
+                        x = (coor[0] * 4) + 2
+                        y = (coor[1] * 2)
+                    case self.MOVES.E:
+                        arrow = '→'
+                        x = (coor[0] * 4) + 4
+                        y = (coor[1] * 2) + 1
+                    case self.MOVES.S:
+                        arrow = '↓'
+                        x = (coor[0] * 4) + 2
+                        y = (coor[1] * 2) + 2
+                    case self.MOVES.W:
+                        arrow = '←'
+                        x = (coor[0] * 4)
+                        y = (coor[1] * 2) + 1
+
+                maze_grid[y][x] = arrow
+
         red_sqr = "\033[31m⬛\033[0m"
         maze_grid[(self.entry[1] * 2) + 1][(self.entry[0] * 4) + 2] = 'E'
         maze_grid[(self.exit[1] * 2) + 1][(self.exit[0] * 4) + 2] = 'X'
+
+        for coor in self.solution_path:
+            if coor != self.entry and coor != self.exit:
+                add_char('•', coor)
+
+        for coor in set(self.maze).difference(set(self.solution_path)):
+            if coor != self.entry and coor != self.exit:
+                add_char('◦', coor)
+
+        add_arrows(self.solution_path, self.solution_movs)
 
         first_frame = True
         #ic(parsed_coor)
