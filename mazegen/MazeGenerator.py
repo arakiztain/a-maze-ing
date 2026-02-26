@@ -20,6 +20,9 @@ class MazeGenerator:
         self.path: list[tuple[int, int]] = []
         self.no_exit = []
         self.exit_found: bool = False
+        self.perfect: bool = False
+        self.solution_path: tuple[tuple[int, int]] = ()
+        self.solution_movs: tuple[MazeGenerator.MOVES] = ()
 
     maze: dict[tuple, list[int]] = {}
 
@@ -144,12 +147,15 @@ class MazeGenerator:
                     and next_coor not in self.no_exit)
 
         def path_generation(curr: tuple[int, int],
+                            solution: tuple[MazeGenerator.MOVES] = (),
                             path: tuple[tuple[int, int], ...]
                             = (entry,)) -> None:
 
             if curr == self.exit:
                 add_walls(curr, None)
                 self.exit_found = True
+                self.solution_path = path
+                self.solution_movs = solution
                 return
 
             moves: list = list(self.MOVES)
@@ -162,7 +168,8 @@ class MazeGenerator:
                     add_walls(curr, mov)
                     next_coor = self.move(curr, mov)
                     self.path.append(next_coor)
-                    path_generation(next_coor, path + (next_coor,))
+                    path_generation(next_coor, solution + (mov,),
+                                    path + (next_coor,))
 
             if no_moves:
                 add_walls(curr, None)
