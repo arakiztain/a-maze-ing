@@ -14,11 +14,15 @@ class MazeGenerator:
         self.height = None
         self.unique_sol = None
         self.path: list[tuple[int, int]] = []
+        self.alt_path: list[tuple[int, int]] = []
         self.no_exit = []
         self.perfect: bool = False
         self.solution_path: tuple[tuple[int, int]] = ()
         self.solution_movs: tuple[MazeGenerator.MOVES] = ()
         self.maze: dict[tuple, list[int]] = {}
+        self.exit_found: bool = False
+        self.alt_solution_path = ()
+        self.alt_solution_movs = ()
 
     class MOVES(Enum):
         N = 'N'
@@ -112,20 +116,49 @@ class MazeGenerator:
             return (0 <= coor[0] <= self.width - 1 and
                     0 <= coor[1] <= self.height - 1)
 
-        def valid_move(curr, mov, path):
+        def valid_move(curr, mov, path, alt_path: bool = False):
             next_coor = self.move(curr, mov)
+            if alt_path:
+                path = self.alt_path
+                return (next_coor not in path and valid_celd(next_coor)
+                        and next_coor not in self.no_exit and next_coor in self.solution_path)
             return (next_coor not in path and valid_celd(next_coor)
                     and next_coor not in self.no_exit)
+
+        def destroy_walls_altpath(coor: tuple, mov: MazeGenerator.MOVES | None):
+            x, y = coor
+            match mov:
+                case self.MOVES.N:
+                    self.maze[coor][0] = 0
+                    self.maze[x, y - 1][2] = 0
+                case self.MOVES.E:
+                    self.maze[coor][1] = 0
+                    self.maze[x + 1, y][3] = 0
+                case self.MOVES.S:
+                    self.maze[coor][2] = 0
+                    self.maze[x, y + 1][0] = 0
+                case self.MOVES.W:
+                    self.maze[coor][3] = 0
+                    self.maze[x - 1, y][1] = 0
 
         def path_generation(curr: tuple[int, int],
                             solution: tuple[MazeGenerator.MOVES] = (),
                             path: tuple[tuple[int, int], ...]
-                            = (self.entry,)) -> None:
+                            = (self.entry,),
+                            alternative_path: bool = False) -> None:
+
+            if self.exit_found and alternative_path:
+                return
 
             if curr == self.exit:
                 add_walls(curr, None)
-                self.solution_path = path
-                self.solution_movs = solution
+                if not alternative_path:
+                    self.solution_path = path
+                    self.solution_movs = solution
+                if alternative_path:
+                    self.alt_solution_path = path
+                    self.alt_solution_movs = solution
+                    self.exit_found = True
                 return
 
             moves: list = list(self.MOVES)
@@ -133,21 +166,31 @@ class MazeGenerator:
 
             no_moves = True
             for mov in moves:
-                if valid_move(curr, mov, self.path):
+                if valid_move(curr, mov, self.path, alternative_path):
                     no_moves = False
-                    add_walls(curr, mov)
                     next_coor = self.move(curr, mov)
-                    self.path.append(next_coor)
+                    if not alternative_path:
+                        add_walls(curr, mov)
+                        self.path.append(next_coor)
+                    else:
+                        self.alt_path.append(next_coor)
+
                     path_generation(next_coor, solution + (mov,),
-                                    path + (next_coor,))
+                                    path + (next_coor,), alternative_path)
 
             if no_moves:
-                add_walls(curr, None)
+                if not alternative_path:
+                    add_walls(curr, None)
                 self.no_exit.append(curr)
 
             return
 
         path_generation(self.entry)
+        self.no_exit = []
+        path_generation(self.entry, alternative_path=True)
+
+        for coor, mov in zip(self.alt_solution_path, self.alt_solution_movs):
+            destroy_walls_altpath(coor, mov)
 
     def render_maze(self) -> None:
 
@@ -252,6 +295,30 @@ class MazeGenerator:
                 add_char('◦', coor)
 
         add_arrows(self.solution_path, self.solution_movs)
+
+        def add_arrows(path, movs):
+            for coor, mov in zip(path, movs):
+                match mov:
+                    case self.MOVES.N:
+                        arrow = '\033[31m↑\033[0m'
+                        x = (coor[0] * 4) + 2
+                        y = (coor[1] * 2)
+                    case self.MOVES.E:
+                        arrow = '\033[31m→\033[0m'
+                        x = (coor[0] * 4) + 4
+                        y = (coor[1] * 2) + 1
+                    case self.MOVES.S:
+                        arrow = '\033[31m↓\033[0m'
+                        x = (coor[0] * 4) + 2
+                        y = (coor[1] * 2) + 2
+                    case self.MOVES.W:
+                        arrow = '\033[31m←\033[0m'
+                        x = (coor[0] * 4)
+                        y = (coor[1] * 2) + 1
+
+                maze_grid[y][x] = arrow
+
+        add_arrows(self.alt_solution_path, self.alt_solution_movs)
 
         first_frame = True
         for coor in parsed_coor:
