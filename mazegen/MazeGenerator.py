@@ -19,6 +19,8 @@ class MazeGenerator:
         self.solution_path: tuple[tuple[int, int]] = ()
         self.solution_movs: tuple[MazeGenerator.MOVES] = ()
         self.maze: dict[tuple, list[int]] = {}
+        self.solutions: list = []
+        self.exit_found = False
         # Logging
         self.broken = []
         self.bmoves = []
@@ -60,7 +62,9 @@ class MazeGenerator:
                    path: tuple[tuple, ...] = ()) -> bool:
 
         if curr_coor == exit:
-            return True
+            if movs[:-1] not in self.solutions:
+                self.solutions.append(movs[:-1])
+            return
         if move is not None:
             if not self.valid_move(curr_coor, move):
                 return False
@@ -70,13 +74,10 @@ class MazeGenerator:
             if curr_coor in path or curr_coor not in self.maze:
                 return False
 
-        moves: list[MazeGenerator.MOVES] = list(self.MOVES)
-
-        return any(
+        for move in list(self.MOVES):
             self.solve_maze(curr_coor, exit, move, movs + (move,),
                             path + (curr_coor,))
-            for move in moves
-        )
+        return
 
     def maze_generation(self):
         def add_walls(coor: tuple, mov: MazeGenerator.MOVES | None) -> None:
@@ -129,6 +130,7 @@ class MazeGenerator:
 
         def create_alt_path():
             n = len(self.solution_path) // 4
+            n = 2
             if n > 0:
                 celds = random.choices(self.solution_path,
                                        k=random.randint(1, n))
@@ -336,7 +338,6 @@ class MazeGenerator:
 
         self.maze_generation()
         self.render_maze()
-        #ic(self.solve_maze(entry, exit))
 
         # Restore to default the instance attributes once finished to be reusable
 
