@@ -21,6 +21,7 @@ class MazeGenerator:
         self.maze: dict[tuple, list[int]] = {}
         self.solutions: list = []
         self.exit_found = False
+        self.isolated = []
 
     class MOVES(Enum):
         N = 'N'
@@ -148,7 +149,8 @@ class MazeGenerator:
             alt_path_valid = (next_coor not in self.solution_path
                               if alt_path else True)
             return (next_coor not in path and valid_celd(next_coor)
-                    and next_coor not in self.no_exit and alt_path_valid)
+                    and next_coor not in self.no_exit and alt_path_valid and
+                    next_coor not in self.isolated)
 
         def path_generation(curr: tuple[int, int],
                             solution: tuple[MazeGenerator.MOVES] = (),
@@ -180,6 +182,38 @@ class MazeGenerator:
 
             return
 
+        def add_42_pattern():
+            pattern_width: int = 7
+            pattern_height: int = 5
+            start_x = (self.width - pattern_width) // 2
+            start_y = (self.height - pattern_height) // 2
+
+            def isolate_celds(coor):
+                if coor != self.entry and coor != self.exit:
+                    self.maze[coor] = [1, 1, 1, 1]
+                    self.isolated.append(coor)
+
+            isolate_celds((start_x, start_y))
+            isolate_celds((start_x, start_y + 1))
+            isolate_celds((start_x, start_y + 2))
+            isolate_celds((start_x + 1, start_y + 2))
+            isolate_celds((start_x + 2, start_y + 2))
+            isolate_celds((start_x + 2, start_y + 3))
+            isolate_celds((start_x + 2, start_y + 4))
+            isolate_celds((start_x + 4, start_y))
+            isolate_celds((start_x + 5, start_y))
+            isolate_celds((start_x + 6, start_y))
+            isolate_celds((start_x + 6, start_y + 1))
+            isolate_celds((start_x + 6, start_y + 2))
+            isolate_celds((start_x + 5, start_y + 2))
+            isolate_celds((start_x + 4, start_y + 2))
+            isolate_celds((start_x + 4, start_y + 3))
+            isolate_celds((start_x + 4, start_y + 4))
+            isolate_celds((start_x + 5, start_y + 4))
+            isolate_celds((start_x + 6, start_y + 4))
+
+        if self.width >= 8 and self.height >= 6:
+            add_42_pattern()
         path_generation(self.entry)
         if not self.unique_sol:
             create_alt_path()
@@ -283,7 +317,8 @@ class MazeGenerator:
                 add_char('•', coor)
 
         for coor in set(maze).difference(set(self.solution_path)):
-            if coor != self.entry and coor != self.exit:
+            if (coor != self.entry and coor != self.exit
+                    and coor not in self.isolated):
                 add_char('◦', coor)
 
         add_arrows(self.solution_path, self.solution_movs)
