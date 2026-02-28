@@ -21,9 +21,6 @@ class MazeGenerator:
         self.maze: dict[tuple, list[int]] = {}
         self.solutions: list = []
         self.exit_found = False
-        # Logging
-        self.broken = []
-        self.bmoves = []
 
     class MOVES(Enum):
         N = 'N'
@@ -129,18 +126,17 @@ class MazeGenerator:
                     self.maze[x - 1, y][1] = 0
 
         def create_alt_path():
-            n = len(self.solution_path) // 4
-            n = 2
-            if n > 0:
-                celds = random.choices(self.solution_path,
-                                       k=random.randint(1, n))
-                for celd in celds:
-                    for mov in list(self.MOVES):
-                        if valid_move(celd, mov, [], True):
-                            self.broken.append(celd)
-                            self.bmoves.append(mov)
-                            remove_walls(celd, mov)
-                            break
+            celds = list(self.solution_path)
+            random.shuffle(celds)
+            count = 0
+            for celd in celds:
+                for mov in list(self.MOVES):
+                    if valid_move(celd, mov, [], True):
+                        remove_walls(celd, mov)
+                        count += 1
+                        break
+                if count == 2:
+                    break
 
         def valid_celd(coor: tuple) -> bool:
             return (0 <= coor[0] <= self.width - 1 and
@@ -163,7 +159,6 @@ class MazeGenerator:
                 add_walls(curr, None)
                 self.solution_path = path
                 self.solution_movs = solution
-                #create_alt_path()
                 return
 
             moves: list = list(self.MOVES)
@@ -186,7 +181,8 @@ class MazeGenerator:
             return
 
         path_generation(self.entry)
-        create_alt_path()
+        if not self.unique_sol:
+            create_alt_path()
 
     def render_maze(self) -> None:
 
@@ -290,18 +286,6 @@ class MazeGenerator:
             if coor != self.entry and coor != self.exit:
                 add_char('◦', coor)
 
-        # Logging
-        for coor, mov in zip(self.broken, self.bmoves):
-            match mov:
-                case self.MOVES.N:
-                     add_char('N', coor)
-                case self.MOVES.E:
-                     add_char('E', coor)
-                case self.MOVES.S:
-                     add_char('S', coor)
-                case self.MOVES.W:
-                     add_char('W', coor)
-
         add_arrows(self.solution_path, self.solution_movs)
 
         first_frame = True
@@ -343,4 +327,4 @@ class MazeGenerator:
 
 
 maze_gen = MazeGenerator()
-maze_gen.generate(12, 12, True, (0, 0), (11, 11))
+maze_gen.generate(12, 12, False, (0, 0), (11, 11))
