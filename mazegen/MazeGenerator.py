@@ -3,6 +3,7 @@ from typing import Callable
 from enum import Enum
 import random
 import sys
+import time
 
 
 class MazeGenerator:
@@ -25,6 +26,7 @@ class MazeGenerator:
         self.parsed_coor = {}
         self.first_frame = True
         self.show_animation: bool = True
+        self.solution_hidden = True
 
     class MOVES(Enum):
         N = 'N'
@@ -253,8 +255,10 @@ class MazeGenerator:
         self.maze_grid[(self.entry[1] * 2) + 1][(self.entry[0] * 4) + 2] = 'E'
         self.maze_grid[(self.exit[1] * 2) + 1][(self.exit[0] * 4) + 2] = 'X'
 
-    def show_solution(self) -> None:
-        def add_arrows(path, movs) -> None:
+    def show_hide_solution(self) -> None:
+        maze_grid = self.maze_grid
+
+        def add_arrows(path, movs, remove: bool = False) -> None:
             for coor, mov in zip(path, movs):
                 match mov:
                     case self.MOVES.N:
@@ -274,14 +278,43 @@ class MazeGenerator:
                         x = (coor[0] * 4)
                         y = (coor[1] * 2) + 1
 
-                self.maze_grid[y][x] = arrow
+                maze_grid[y][x] = arrow if not remove else ' '
+                self.print_maze(maze_grid, self.first_frame)
+                time.sleep(0.01)
 
-        add_arrows(self.shortest_sol[1], self.shortest_sol[0])
+        def add_char(char: str, coor: tuple[int, int],
+                     maze_grid: dict) -> None:
+            maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
+
+        if self.solution_hidden:
+            self.solution_hidden = False
+            self.first_frame = False
+            for coor in self.shortest_sol[1]:
+                if coor != self.entry and coor != self.exit:
+                    add_char('•', coor, maze_grid)
+                    self.print_maze(maze_grid, self.first_frame)
+                    time.sleep(0.01)
+
+            add_arrows(self.shortest_sol[1], self.shortest_sol[0])
+
+            # for coor in set(self.maze).difference(set(self.shortest_sol[1])):
+            #     if (coor != self.entry and coor != self.exit
+            #             and coor not in self.isolated):
+            #         add_char('◦', coor, maze_grid)
+        else:
+            self.solution_hidden = True
+            for coor in self.shortest_sol[1]:
+                if coor != self.entry and coor != self.exit:
+                    add_char(' ', coor, maze_grid)
+            add_arrows(self.shortest_sol[1], self.shortest_sol[0], True)
+            self.print_maze(maze_grid, self.first_frame)
 
     def parse_vertices(self):
         maze: dict = self.maze
         width: int = self.width
         height: int = self.height
+        print(sorted(maze.keys()))
+        ic(self.isolated)
         vertices: dict[tuple[int, int], list[int]] = {}
         for y in range(height):
             for x in range(width):
@@ -337,8 +370,7 @@ class MazeGenerator:
                         maze_grid[y_ + 2][x_ + w] = '─'
                 if self.maze[x, y][3] == 1:
                     maze_grid[y_ + 1][x_] = '│'
-            self.print_maze(maze_grid, self.first_frame)
-            self.first_frame = False
+        self.print_maze(maze_grid, self.first_frame)
 
     def animate(self):
         maze_grid = self.maze_grid
@@ -387,22 +419,6 @@ class MazeGenerator:
 
         sys.stdout.flush()
 
-    def render_maze2(self) -> None:
-
-        maze: dict = self.maze
-
-        def add_char(char: str, coor: tuple[int, int]) -> None:
-            self.maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
-
-        for coor in self.solution_path:
-            if coor != self.entry and coor != self.exit:
-                add_char('•', coor)
-
-        for coor in set(maze).difference(set(self.solution_path)):
-            if (coor != self.entry and coor != self.exit
-                    and coor not in self.isolated):
-                add_char('◦', coor)
-
     def generate(self, width: int, height: int, unique_sol: bool,
                  entry: tuple, exit: tuple, show_animation: bool = False):
         # Add this to a setter?
@@ -419,6 +435,10 @@ class MazeGenerator:
         self.create_grid()
         self.maze_generation()
         self.render_maze()
+        time.sleep(3)
+        self.show_hide_solution()
+        time.sleep(3)
+        self.show_hide_solution()
 
         # Restore to default the instance attributes once finished to be reusable
 
