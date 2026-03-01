@@ -248,6 +248,10 @@ class MazeGenerator:
         isolate_celds((start_x + 5, start_y + 4))
         isolate_celds((start_x + 6, start_y + 4))
 
+        self.maze[start_x + 1, start_y + 1] = [0, 1, 1, 1]
+        self.maze[start_x + 5, start_y + 1] = [1, 1, 1, 0]
+        self.maze[start_x + 5, start_y + 3] = [1, 0, 1, 1]
+
     def create_grid(self):
         self.maze_grid = [[' '] * ((self.width + 1) + (self.width * 3))
                           for _ in range(self.height * 2 + 1)]
@@ -313,8 +317,6 @@ class MazeGenerator:
         maze: dict = self.maze
         width: int = self.width
         height: int = self.height
-        print(sorted(maze.keys()))
-        ic(self.isolated)
         vertices: dict[tuple[int, int], list[int]] = {}
         for y in range(height):
             for x in range(width):
