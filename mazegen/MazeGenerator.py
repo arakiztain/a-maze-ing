@@ -2,7 +2,6 @@ from icecream import ic
 from typing import Callable
 from enum import Enum
 import random
-import time
 import sys
 
 
@@ -22,12 +21,31 @@ class MazeGenerator:
         self.exit_found = False
         self.isolated = []
         self.shortest_sol: tuple[tuple, tuple] = None
+        self.maze_grid = None
+        self.parsed_coor = {}
+        self.first_frame = True
+        self.show_animation: bool = True
 
     class MOVES(Enum):
         N = 'N'
         E = 'E'
         S = 'S'
         W = 'W'
+
+    maze_chars: dict[tuple, str] = {
+            (0, 0, 0, 0): ' ',
+            (0, 0, 1, 1): '┐',
+            (0, 1, 1, 0): '┌',
+            (1, 1, 0, 0): '└',
+            (1, 0, 0, 1): '┘',
+            (0, 1, 1, 1): '┬',
+            (1, 1, 0, 1): '┴',
+            (1, 0, 1, 0): '│',
+            (0, 1, 0, 1): '─',
+            (1, 0, 1, 1): '┤',
+            (1, 1, 1, 0): '├',
+            (1, 1, 1, 1): '┼'
+        }
 
     def move(self, coordinates: tuple[int, int],
              move: MOVES) -> tuple[int, int]:
@@ -109,6 +127,8 @@ class MazeGenerator:
                     walls[i] = 1
 
             self.maze[coor] = walls
+            if self.show_animation:
+                self.animate()
 
         def remove_walls(coor: tuple, mov: MazeGenerator.MOVES | None):
             x, y = coor
@@ -187,114 +207,52 @@ class MazeGenerator:
             self.shortest_sol = min(self.solutions,
                                     key=lambda sol: len(sol[0]))
 
-        def add_42_pattern():
-            pattern_width: int = 7
-            pattern_height: int = 5
-            start_x = (self.width - pattern_width) // 2
-            start_y = (self.height - pattern_height) // 2
-
-            def isolate_celds(coor):
-                if coor != self.entry and coor != self.exit:
-                    self.maze[coor] = [1, 1, 1, 1]
-                    self.isolated.append(coor)
-
-            isolate_celds((start_x, start_y))
-            isolate_celds((start_x, start_y + 1))
-            isolate_celds((start_x, start_y + 2))
-            isolate_celds((start_x + 1, start_y + 2))
-            isolate_celds((start_x + 2, start_y + 2))
-            isolate_celds((start_x + 2, start_y + 3))
-            isolate_celds((start_x + 2, start_y + 4))
-            isolate_celds((start_x + 4, start_y))
-            isolate_celds((start_x + 5, start_y))
-            isolate_celds((start_x + 6, start_y))
-            isolate_celds((start_x + 6, start_y + 1))
-            isolate_celds((start_x + 6, start_y + 2))
-            isolate_celds((start_x + 5, start_y + 2))
-            isolate_celds((start_x + 4, start_y + 2))
-            isolate_celds((start_x + 4, start_y + 3))
-            isolate_celds((start_x + 4, start_y + 4))
-            isolate_celds((start_x + 5, start_y + 4))
-            isolate_celds((start_x + 6, start_y + 4))
-
-        if self.width >= 8 and self.height >= 6:
-            add_42_pattern()
         path_generation(self.entry)
         if not self.unique_sol:
             create_alt_path()
         self.solve_maze(self.entry, self.exit)
         shortest_sol()
 
-    def render_maze(self) -> None:
+    def add_42_pattern(self):
+        pattern_width: int = 7
+        pattern_height: int = 5
+        start_x = (self.width - pattern_width) // 2
+        start_y = (self.height - pattern_height) // 2
 
-        maze: dict = self.maze
-        width: int = self.width
-        height: int = self.height
-        maze_chars: dict[tuple, str] = {
-            (0, 0, 0, 0): ' ',
-            (0, 0, 1, 1): '┐',
-            (0, 1, 1, 0): '┌',
-            (1, 1, 0, 0): '└',
-            (1, 0, 0, 1): '┘',
-            (0, 1, 1, 1): '┬',
-            (1, 1, 0, 1): '┴',
-            (1, 0, 1, 0): '│',
-            (0, 1, 0, 1): '─',
-            (1, 0, 1, 1): '┤',
-            (1, 1, 1, 0): '├',
-            (1, 1, 1, 1): '┼'
-        }
+        def isolate_celds(coor):
+            if coor != self.entry and coor != self.exit:
+                self.maze[coor] = [1, 1, 1, 1]
+                self.isolated.append(coor)
 
-        def print_maze(maze: list[str], first_frame: bool) -> None:
+        isolate_celds((start_x, start_y))
+        isolate_celds((start_x, start_y + 1))
+        isolate_celds((start_x, start_y + 2))
+        isolate_celds((start_x + 1, start_y + 2))
+        isolate_celds((start_x + 2, start_y + 1))
+        isolate_celds((start_x + 2, start_y + 2))
+        isolate_celds((start_x + 2, start_y + 3))
+        isolate_celds((start_x + 2, start_y + 4))
+        isolate_celds((start_x + 4, start_y))
+        isolate_celds((start_x + 5, start_y))
+        isolate_celds((start_x + 6, start_y))
+        isolate_celds((start_x + 6, start_y + 1))
+        isolate_celds((start_x + 6, start_y + 2))
+        isolate_celds((start_x + 5, start_y + 2))
+        isolate_celds((start_x + 4, start_y + 2))
+        isolate_celds((start_x + 4, start_y + 3))
+        isolate_celds((start_x + 4, start_y + 4))
+        isolate_celds((start_x + 5, start_y + 4))
+        isolate_celds((start_x + 6, start_y + 4))
 
-            if not first_frame:
-                sys.stdout.write("\033[F" * (len(maze)))
+    def create_grid(self):
+        self.maze_grid = [[' '] * ((self.width + 1) + (self.width * 3))
+                          for _ in range(self.height * 2 + 1)]
 
-            for row in maze:
-                #time.sleep(0.0002)
-                sys.stdout.write("".join(row) + '\n')
+        self.maze_grid[(self.entry[1] * 2) + 1][(self.entry[0] * 4) + 2] = 'E'
+        self.maze_grid[(self.exit[1] * 2) + 1][(self.exit[0] * 4) + 2] = 'X'
 
-            sys.stdout.flush()
-
-        parse_coor: dict[tuple[int, int], list[int]] = {}
-        for y in range(height):
-            for x in range(width):
-                N = maze[x, y - 1][3] if y - 1 >= 0 else 0
-                E = maze[x, y][0]
-                S = maze[x, y][3]
-                W = maze[x - 1, y][0] if x - 1 >= 0 else 0
-
-                parse_coor[x, y] = (N, E, S, W)
-
-        for x in range(width):
-            N = maze[x, height - 1][3]
-            E = 1
-            S = 0
-            W = 1 if x != 0 else 0
-
-            parse_coor[x, height] = (N, E, S, W)
-
-        for y in range(height):
-            N = 1 if y != 0 else 0
-            E = 0
-            S = 1
-            W = maze[width - 1, y][0]
-
-            parse_coor[width, y] = (N, E, S, W)
-
-        parse_coor[width, height] = (1, 0, 0, 1)
-        parsed_coor = {}
-        for coor in parse_coor:
-            key = parse_coor[coor]
-            parsed_coor[coor] = maze_chars[key] if key in maze_chars else ' '
-
-        maze_grid: list[str] = [[' '] * ((width + 1) + (width * 3))
-                                for _ in range(height * 2 + 1)]
-
-        def add_char(char: str, coor: tuple[int, int]) -> None:
-            maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
-
-        def add_arrows(path, movs):
+    def show_solution(self) -> None:
+        def add_arrows(path, movs) -> None:
             for coor, mov in zip(path, movs):
                 match mov:
                     case self.MOVES.N:
@@ -314,10 +272,125 @@ class MazeGenerator:
                         x = (coor[0] * 4)
                         y = (coor[1] * 2) + 1
 
-                maze_grid[y][x] = arrow
+                self.maze_grid[y][x] = arrow
 
-        maze_grid[(self.entry[1] * 2) + 1][(self.entry[0] * 4) + 2] = 'E'
-        maze_grid[(self.exit[1] * 2) + 1][(self.exit[0] * 4) + 2] = 'X'
+        add_arrows(self.shortest_sol[1], self.shortest_sol[0])
+
+    def parse_vertices(self):
+        maze: dict = self.maze
+        width: int = self.width
+        height: int = self.height
+        vertices: dict[tuple[int, int], list[int]] = {}
+        for y in range(height):
+            for x in range(width):
+                N = maze[x, y - 1][3] if y - 1 >= 0 else 0
+                E = maze[x, y][0]
+                S = maze[x, y][3]
+                W = maze[x - 1, y][0] if x - 1 >= 0 else 0
+
+                vertices[x, y] = (N, E, S, W)
+
+        for x in range(width):
+            N = maze[x, height - 1][3]
+            E = 1
+            S = 0
+            W = 1 if x != 0 else 0
+
+            vertices[x, height] = (N, E, S, W)
+
+        for y in range(height):
+            N = 1 if y != 0 else 0
+            E = 0
+            S = 1
+            W = maze[width - 1, y][0]
+
+            vertices[width, y] = (N, E, S, W)
+
+        vertices[width, height] = (1, 0, 0, 1)
+        parsed_coor = {}
+        for coor in vertices:
+            key = vertices[coor]
+            parsed_coor[coor] = (self.maze_chars[key]
+                                 if key in self.maze_chars else ' ')
+        self.parsed_coor = parsed_coor
+        return parsed_coor
+
+    def render_maze(self):
+        maze_grid = self.maze_grid
+        for coor in self.parse_vertices():
+            x, y = coor
+            x_ = x * 4
+            y_ = y * 2
+
+            maze_grid[y * 2][x * 4] = self.parsed_coor[coor]
+
+            if coor in self.maze:
+                if self.maze[x, y][0] == 1:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_][x_ + w] = '─'
+                if self.maze[x, y][1] == 1:
+                    maze_grid[y_ + 1][x_ + 4] = '│'
+                if self.maze[x, y][2] == 1:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_ + 2][x_ + w] = '─'
+                if self.maze[x, y][3] == 1:
+                    maze_grid[y_ + 1][x_] = '│'
+            self.print_maze(maze_grid, self.first_frame)
+            self.first_frame = False
+
+    def animate(self):
+        maze_grid = self.maze_grid
+        coords = self.maze
+
+        for coor in coords:
+            x, y = coor
+            x_ = x * 4
+            y_ = y * 2
+
+            if self.solutions:
+                maze_grid[y * 2][x * 4] = self.parsed_coor[coor]
+
+            if coor in self.maze:
+                if self.maze[x, y][0] == 1:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_][x_ + w] = '─'
+                else:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_][x_ + w] = ' '
+                if self.maze[x, y][1] == 1:
+                    maze_grid[y_ + 1][x_ + 4] = '│'
+                else:
+                    maze_grid[y_ + 1][x_ + 4] = ' '
+                if self.maze[x, y][2] == 1:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_ + 2][x_ + w] = '─'
+                else:
+                    for w in range(1, 3 + 1):
+                        maze_grid[y_ + 2][x_ + w] = ' '
+                if self.maze[x, y][3] == 1:
+                    maze_grid[y_ + 1][x_] = '│'
+                else:
+                    maze_grid[y_ + 1][x_] = ' '
+            self.print_maze(maze_grid, self.first_frame)
+            if self.first_frame:
+                self.first_frame = False
+
+    def print_maze(self, maze: list, first_frame: bool) -> None:
+
+        if not first_frame:
+            sys.stdout.write("\033[F" * (len(maze)))
+
+        for row in maze:
+            sys.stdout.write("".join(row) + '\n')
+
+        sys.stdout.flush()
+
+    def render_maze2(self) -> None:
+
+        maze: dict = self.maze
+
+        def add_char(char: str, coor: tuple[int, int]) -> None:
+            self.maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
 
         for coor in self.solution_path:
             if coor != self.entry and coor != self.exit:
@@ -328,32 +401,8 @@ class MazeGenerator:
                     and coor not in self.isolated):
                 add_char('◦', coor)
 
-        add_arrows(self.shortest_sol[1], self.shortest_sol[0])
-
-        first_frame = True
-        for coor in parsed_coor:
-            x, y = coor
-            x_ = x * 4
-            y_ = y * 2
-
-            maze_grid[y * 2][x * 4] = parsed_coor[coor]
-
-            if coor in maze:
-                if maze[x, y][0] == 1:
-                    for w in range(1, 3 + 1):
-                        maze_grid[y_][x_ + w] = '─'
-                if maze[x, y][1] == 1:
-                    maze_grid[y_ + 1][x_ + 4] = '│'
-                if maze[x, y][2] == 1:
-                    for w in range(1, 3 + 1):
-                        maze_grid[y_ + 2][x_ + w] = '─'
-                if maze[x, y][3] == 1:
-                    maze_grid[y_ + 1][x_] = '│'
-            print_maze(maze_grid, first_frame)
-            first_frame = False
-
     def generate(self, width: int, height: int, unique_sol: bool,
-                 entry: tuple, exit: tuple):
+                 entry: tuple, exit: tuple, show_animation: bool = False):
         # Add this to a setter?
         self.entry = entry
         self.exit = exit
@@ -361,7 +410,11 @@ class MazeGenerator:
         self.height = height
         self.unique_sol = unique_sol
         self.path.append(entry)
+        self.show_animation = show_animation
 
+        if self.width >= 8 and self.height >= 6:
+            self.add_42_pattern()
+        self.create_grid()
         self.maze_generation()
         self.render_maze()
 
@@ -369,4 +422,4 @@ class MazeGenerator:
 
 
 maze_gen = MazeGenerator()
-maze_gen.generate(12, 12, False, (0, 0), (11, 11))
+maze_gen.generate(12, 12, True, (0, 0), (7, 7), True)
