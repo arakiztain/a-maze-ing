@@ -154,6 +154,8 @@ class MazeGenerator:
                 for mov in list(self.MOVES):
                     if valid_move(celd, mov, [], True):
                         remove_walls(celd, mov)
+                        if self.show_animation:
+                            self.animate()
                         count += 1
                         break
                 if count == 2:
@@ -422,4 +424,4 @@ class MazeGenerator:
 
 
 maze_gen = MazeGenerator()
-maze_gen.generate(12, 12, True, (0, 0), (7, 7), True)
+maze_gen.generate(12, 12, False, (0, 0), (7, 7), True)
