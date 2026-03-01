@@ -17,11 +17,11 @@ class MazeGenerator:
         self.no_exit = []
         self.perfect: bool = False
         self.solution_path: tuple[tuple[int, int]] = ()
-        self.solution_movs: tuple[MazeGenerator.MOVES] = ()
         self.maze: dict[tuple, list[int]] = {}
-        self.solutions: list = []
+        self.solutions: set[tuple] = set()
         self.exit_found = False
         self.isolated = []
+        self.shortest_sol: tuple[tuple, tuple] = None
 
     class MOVES(Enum):
         N = 'N'
@@ -61,7 +61,7 @@ class MazeGenerator:
 
         if curr_coor == exit:
             if movs[:-1] not in self.solutions:
-                self.solutions.append(movs[:-1])
+                self.solutions.add((movs[:-1], path))
             return
         if move is not None:
             if not self.valid_move(curr_coor, move):
@@ -160,7 +160,6 @@ class MazeGenerator:
             if curr == self.exit:
                 add_walls(curr, None)
                 self.solution_path = path
-                self.solution_movs = solution
                 return
 
             moves: list = list(self.MOVES)
@@ -181,6 +180,12 @@ class MazeGenerator:
                 self.no_exit.append(curr)
 
             return
+
+        def shortest_sol() -> None:
+            if not self.solutions:
+                return
+            self.shortest_sol = min(self.solutions,
+                                    key=lambda sol: len(sol[0]))
 
         def add_42_pattern():
             pattern_width: int = 7
@@ -217,6 +222,8 @@ class MazeGenerator:
         path_generation(self.entry)
         if not self.unique_sol:
             create_alt_path()
+        self.solve_maze(self.entry, self.exit)
+        shortest_sol()
 
     def render_maze(self) -> None:
 
@@ -321,7 +328,7 @@ class MazeGenerator:
                     and coor not in self.isolated):
                 add_char('◦', coor)
 
-        add_arrows(self.solution_path, self.solution_movs)
+        add_arrows(self.shortest_sol[1], self.shortest_sol[0])
 
         first_frame = True
         for coor in parsed_coor:
