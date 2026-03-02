@@ -4,6 +4,7 @@ from enum import Enum
 import random
 import sys
 import time
+from itertools import cycle
 
 
 class MazeGenerator:
@@ -27,12 +28,25 @@ class MazeGenerator:
         self.first_frame = True
         self.show_animation: bool = True
         self.solution_hidden = True
+        self.colour: str = ''
+        self.colour_iter = cycle(self.COLOURS)
 
     class MOVES(Enum):
         N = 'N'
         E = 'E'
         S = 'S'
         W = 'W'
+
+    COLOURS = (
+        "\033[91m",
+        "\033[92m",
+        "\033[93m",
+        "\033[94m",
+        "\033[95m",
+        "\033[96m",
+    )
+
+    RESET = "\033[0m"
 
     maze_chars: dict[tuple, str] = {
             (0, 0, 0, 0): ' ',
@@ -365,7 +379,8 @@ class MazeGenerator:
         parsed_coor = {}
         for coor in vertices:
             key = vertices[coor]
-            parsed_coor[coor] = (self.maze_chars[key]
+            parsed_coor[coor] = (self.colour + self.maze_chars[key]
+                                 + self.RESET
                                  if key in self.maze_chars else ' ')
         self.parsed_coor = parsed_coor
         return parsed_coor
@@ -382,16 +397,17 @@ class MazeGenerator:
             if coor in self.maze:
                 if self.maze[x, y][0] == 1:
                     for w in range(1, 3 + 1):
-                        maze_grid[y_][x_ + w] = '─'
+                        maze_grid[y_][x_ + w] = self.colour + '─' + self.RESET
                 if self.maze[x, y][1] == 1:
-                    maze_grid[y_ + 1][x_ + 4] = '│'
+                    maze_grid[y_ + 1][x_ + 4] = self.colour + '│' + self.RESET
                 if self.maze[x, y][2] == 1:
                     for w in range(1, 3 + 1):
-                        maze_grid[y_ + 2][x_ + w] = '─'
+                        maze_grid[y_ + 2][x_ + w] = (self.colour + '─'
+                                                     + self.RESET)
                 if self.maze[x, y][3] == 1:
-                    maze_grid[y_ + 1][x_] = '│'
-            self.print_maze(maze_grid, self.first_frame)
-            self.first_frame = False
+                    maze_grid[y_ + 1][x_] = self.colour + '│' + self.RESET
+        self.print_maze(maze_grid, self.first_frame)
+        self.first_frame = False
 
     def animate(self):
         maze_grid = self.maze_grid
@@ -439,6 +455,11 @@ class MazeGenerator:
             sys.stdout.write("".join(row) + '\n')
 
         sys.stdout.flush()
+
+    def change_walls_colour(self):
+        self.colour = next(self.colour_iter)
+        self.parse_vertices()
+        self.render_maze()
 
     def generate(self, width: int, height: int, unique_sol: bool,
                  entry: tuple, exit: tuple, show_animation: bool = False):
