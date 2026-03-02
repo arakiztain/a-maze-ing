@@ -205,17 +205,17 @@ class MazeGenerator:
 
             return
 
-        def shortest_sol() -> None:
-            if not self.solutions:
-                return
-            self.shortest_sol = min(self.solutions,
-                                    key=lambda sol: len(sol[0]))
-
         path_generation(self.entry)
         if not self.unique_sol:
             create_alt_path()
-        self.solve_maze(self.entry, self.exit)
-        shortest_sol()
+        # self.solve_maze(self.entry, self.exit)
+        # self.shortest_solution()
+
+    def shortest_solution(self) -> None:
+        if not self.solutions:
+            return
+        self.shortest_sol = min(self.solutions,
+                                key=lambda sol: len(sol[0]))
 
     def add_42_pattern(self):
         pattern_width: int = 7
@@ -262,7 +262,8 @@ class MazeGenerator:
     def show_hide_solution(self) -> None:
         maze_grid = self.maze_grid
 
-        def add_arrows(path, movs, remove: bool = False) -> None:
+        def add_remove_arrows(path, movs, remove: bool = False,
+                              animation: bool = False) -> None:
             for coor, mov in zip(path, movs):
                 match mov:
                     case self.MOVES.N:
@@ -283,35 +284,52 @@ class MazeGenerator:
                         y = (coor[1] * 2) + 1
 
                 maze_grid[y][x] = arrow if not remove else ' '
+                if animation:
+                    self.print_maze(maze_grid, self.first_frame)
+                    time.sleep(0.01)
+            if not animation:
                 self.print_maze(maze_grid, self.first_frame)
-                time.sleep(0.01)
 
         def add_char(char: str, coor: tuple[int, int],
                      maze_grid: dict) -> None:
             maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
 
+        def add_chars(coords: list, char: str, maze_grid: dict,
+                      animation: bool = False):
+            for coor in coords:
+                if (coor != self.entry and coor != self.exit
+                        and coor not in self.isolated):
+                    add_char(char, coor, maze_grid)
+                    if animation:
+                        self.print_maze(maze_grid, self.first_frame)
+                        time.sleep(0.01)
+            if not animation:
+                self.print_maze(maze_grid, self.first_frame)
+
         if self.solution_hidden:
             self.solution_hidden = False
-            self.first_frame = False
-            for coor in self.shortest_sol[1]:
-                if coor != self.entry and coor != self.exit:
-                    add_char('•', coor, maze_grid)
-                    self.print_maze(maze_grid, self.first_frame)
-                    time.sleep(0.01)
+            animation = False
 
-            add_arrows(self.shortest_sol[1], self.shortest_sol[0])
+            if not self.shortest_sol:
+                self.solve_maze(self.entry, self.exit)
+                self.shortest_solution()
+                animation = True
 
-            # for coor in set(self.maze).difference(set(self.shortest_sol[1])):
-            #     if (coor != self.entry and coor != self.exit
-            #             and coor not in self.isolated):
-            #         add_char('◦', coor, maze_grid)
+                add_chars(self.maze, '◦', maze_grid, animation=animation)
+                add_chars(self.shortest_sol[1], '○', maze_grid,
+                          animation=animation)
+            add_remove_arrows(self.shortest_sol[1], self.shortest_sol[0],
+                              animation=animation)
+            add_chars(self.shortest_sol[1], '•', maze_grid,
+                      animation=animation)
+            add_chars(set(self.maze).difference(set(self.shortest_sol[1])),
+                      ' ', maze_grid)
+
         else:
             self.solution_hidden = True
-            for coor in self.shortest_sol[1]:
-                if coor != self.entry and coor != self.exit:
-                    add_char(' ', coor, maze_grid)
-            add_arrows(self.shortest_sol[1], self.shortest_sol[0], True)
-            self.print_maze(maze_grid, self.first_frame)
+
+            add_chars(self.maze, ' ', maze_grid)
+            add_remove_arrows(self.shortest_sol[1], self.shortest_sol[0], True)
 
     def parse_vertices(self):
         maze: dict = self.maze
@@ -372,7 +390,8 @@ class MazeGenerator:
                         maze_grid[y_ + 2][x_ + w] = '─'
                 if self.maze[x, y][3] == 1:
                     maze_grid[y_ + 1][x_] = '│'
-        self.print_maze(maze_grid, self.first_frame)
+            self.print_maze(maze_grid, self.first_frame)
+            self.first_frame = False
 
     def animate(self):
         maze_grid = self.maze_grid
