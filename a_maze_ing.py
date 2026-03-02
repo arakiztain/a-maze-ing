@@ -17,7 +17,7 @@ def main() -> None:
         r = parse_config(sys.argv[1])
         # vars convert a NameSpace to a dict
         generator.main(**vars(r))
-        maze_render()
+        maze_render.main()
 
     except FileNotFoundError as e:
         print(e)

@@ -3,7 +3,7 @@ from collections import deque
 from typing import Tuple, List
 
 
-def generate_perfect_maze(width: int, height: int, entry: int) -> List:
+def generate_perfect_maze(width: int, height: int, entry: Tuple[int, int]) -> List:
     maze = [[0b1111 for _ in range(width)] for _ in range(height)]
     visited = [[False]*width for _ in range(height)]
 
@@ -73,15 +73,18 @@ def save_maze(
         f.write(f"{exit[0]}, {exit[1]}\n")
         f.write(path + "\n")
 
-
 def main(
         width: int,
         height: int,
-        entry: Tuple[float, float],
-        exit: Tuple[float, float],
+        entry: Tuple[int, int],
+        exit: Tuple[int, int],
         output_file: str,
-        perfect: bool
+        perfect: bool,
+        seed: int | None = None
         ) -> None:
+
+    if seed is not None:
+        random.seed(seed)
 
     maze = generate_perfect_maze(width, height, entry)
 
