@@ -1,6 +1,7 @@
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 from pydantic import Field, model_validator
 from typing import Tuple
+import random
 
 
 class ConfigError(Exception):
@@ -39,6 +40,9 @@ class MazeConfig:
         if errors:
             raise ConfigError("; ".join(errors))
 
+        if self.seed is None:
+            self.seed = random.randint(0, 999999)
+
         return self
 
 
@@ -71,5 +75,6 @@ def parse_config(path: str) -> MazeConfig:
                 )
         config_dict[key.lower()] = value
 
-    # print(config_dict)
+    # maze = MazeConfig(**config_dict)
+    # print(maze)
     return MazeConfig(**config_dict)
