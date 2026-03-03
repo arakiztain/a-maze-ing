@@ -1,6 +1,7 @@
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 from pydantic import Field, model_validator
 from typing import Tuple
+import random
 
 
 class ConfigError(Exception):
@@ -38,6 +39,10 @@ class MazeConfig:
 
         if errors:
             raise ConfigError("; ".join(errors))
+        
+
+        if self.seed is None:
+            self.seed = random.randint(0, 999999)
 
         return self
 

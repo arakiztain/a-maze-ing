@@ -2,8 +2,10 @@ import sys
 from icecream import ic
 from typing import Callable, Any
 from maze.config_parser import parse_config
-import maze.generator as generator
-import maze.render_mazeMLX as maze_render
+from mazegen.MazeGenerator import MazeGenerator
+# import maze.render_mazeMLX as maze_render
+
+
 
 
 def main() -> None:
@@ -16,8 +18,18 @@ def main() -> None:
 
         r = parse_config(sys.argv[1])
         # vars convert a NameSpace to a dict
-        generator.main(**vars(r))
-        maze_render()
+        # generator.main(**vars(r))
+        # maze_render()
+        maze_gen = MazeGenerator()
+        maze_gen.generate(
+			width=r.width,
+			height=r.height,
+			unique_sol=not r.perfect,
+			seed=r.seed,
+			entry=r.entry,
+			exit_coor=r.exit,
+            output_file=r.output_file,
+		)
 
     except FileNotFoundError as e:
         print(e)
