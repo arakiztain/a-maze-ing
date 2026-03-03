@@ -16,6 +16,7 @@ class MazeConfig:
     exit: Tuple[int, int] = Field(...)
     output_file: str = Field(...)
     perfect: bool = Field(default=True)
+    seed: int | None = Field(default=None)
 
     @model_validator(mode="after")
     def entry_validator(self):
@@ -24,12 +25,12 @@ class MazeConfig:
 
         errors = []
 
-        if (entry_x > self.width or entry_y > self.height):
+        if (entry_x >= self.width or entry_y >= self.height):
             errors.append(
                 f"Entry {self.entry} out of the limits:"
                 f" ({self.width}, {self.height})"
                 )
-        if (exit_x > self.width or exit_y > self.height):
+        if (exit_x >= self.width or exit_y >= self.height):
             errors.append(
                 f"Exit {self.exit} out of the limits:"
                 f" ({self.width}, {self.height})"
@@ -63,8 +64,12 @@ def parse_config(path: str) -> MazeConfig:
             value = tuple(map(int, value.split(",")))
         elif key == "PERFECT":
             value = value.lower() == "true"
-
+        elif key == "SEED":
+            value = (
+                int(value) if value.strip() and
+                value.lower() != "none" else None
+                )
         config_dict[key.lower()] = value
 
-    print(config_dict)
+    # print(config_dict)
     return MazeConfig(**config_dict)
