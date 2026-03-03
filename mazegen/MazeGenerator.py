@@ -1,32 +1,37 @@
-from icecream import ic
-from typing import Iterator
+from __future__ import annotations
+from typing import Iterator, TypeAlias
 from enum import Enum
 import random
 import sys
 import time
 from itertools import cycle
 
-Coor = tuple[int, int]
+Coor: TypeAlias = tuple[int, int]
+Solution: TypeAlias = tuple[
+    tuple["MazeGenerator.Moves", ...],
+    tuple[Coor, ...]]
+Solutions: TypeAlias = set[Solution]
+MazeGrid: TypeAlias = list[list[str]]
+Maze: TypeAlias = dict[Coor, list[int]]
 
 
 class MazeGenerator:
     def __init__(self):
-        self.entry = None
-        self.exit = None
-        self.width = None
-        self.height = None
-        self.unique_sol = None
+        self.entry: Coor = None
+        self.exit: Coor = None
+        self.width: int = None
+        self.height: int = None
+        self.unique_sol: bool = None
         self.path: list[Coor] = []
         self.no_exit: list[Coor] = []
         self.perfect: bool = False
         self.solution_path: tuple[Coor] = ()
-        self.maze: dict[tuple, list[int]] = {}
-        self.solutions: set[tuple] = set()
-        self.exit_found = False
+        self.maze: Maze = {}
+        self.solutions: Solutions = set()
         self.isolated: list[Coor] = []
-        self.shortest_sol: tuple[tuple, tuple] = None
-        self.maze_grid = None
-        self.parsed_coor = {}
+        self.shortest_sol: Solution = None
+        self.maze_grid: MazeGrid = None
+        self.parsed_coor: dict[Coor, str] = {}
         self.first_frame: bool = True
         self.show_animation: bool = True
         self.solution_hidden: bool = True
@@ -96,12 +101,12 @@ class MazeGenerator:
         x, y = coordinates
         return self.maze[x, y][move_index[move]] == 0
 
-    def solve_maze(self, curr_coor: tuple[int, int],
-                   exit: tuple[int, int], move: Moves | None = None,
-                   movs: tuple[str, ...] = (),
-                   path: tuple[tuple, ...] = ()) -> None:
+    def solve_maze(self, curr_coor: Coor,
+                   exit_coor: tuple[int, int], move: Moves | None = None,
+                   movs: tuple[Moves, ...] = (),
+                   path: tuple[Coor, ...] = ()) -> None:
 
-        if curr_coor == exit:
+        if curr_coor == exit_coor:
             if movs[:-1] not in self.solutions:
                 self.solutions.add((movs[:-1], path))
             return
@@ -115,11 +120,11 @@ class MazeGenerator:
                 return False
 
         for move in list(self.Moves):
-            self.solve_maze(curr_coor, exit, move, movs + (move,),
+            self.solve_maze(curr_coor, exit_coor, move, movs + (move,),
                             path + (curr_coor,))
         return
 
-    def maze_generation(self):
+    def maze_generation(self) -> None:
         def add_walls(coor: tuple, mov: MazeGenerator.Moves | None) -> None:
             if coor not in self.maze:
                 walls: list[int | None] = [None, None, None, None]
@@ -154,7 +159,9 @@ class MazeGenerator:
             if self.show_animation:
                 self.animate()
 
-        def remove_walls(coor: tuple, mov: MazeGenerator.Moves | None):
+        def remove_walls(coor: Coor, mov: MazeGenerator.Moves | None) -> None:
+            x: int
+            y: int
             x, y = coor
             match mov:
                 case self.Moves.N:
@@ -170,7 +177,7 @@ class MazeGenerator:
                     self.maze[coor][3] = 0
                     self.maze[x - 1, y][1] = 0
 
-        def create_alt_path():
+        def create_alt_path() -> None:
             celds = list(self.solution_path)
             random.shuffle(celds)
             count = 0
@@ -208,10 +215,10 @@ class MazeGenerator:
                 self.solution_path = path
                 return
 
-            moves: list = list(self.Moves)
+            moves: list[MazeGenerator.Moves] = list(self.Moves)
             random.shuffle(moves)
 
-            no_moves = True
+            no_moves: bool = True
             for mov in moves:
                 if valid_move(curr, mov, self.path):
                     no_moves = False
@@ -237,11 +244,11 @@ class MazeGenerator:
         self.shortest_sol = min(self.solutions,
                                 key=lambda sol: len(sol[0]))
 
-    def add_42_pattern(self):
+    def add_42_pattern(self) -> None:
         pattern_width: int = 7
         pattern_height: int = 5
-        start_x = (self.width - pattern_width) // 2
-        start_y = (self.height - pattern_height) // 2
+        start_x: int = (self.width - pattern_width) // 2
+        start_y: int = (self.height - pattern_height) // 2
 
         def isolate_celds(coor):
             self.maze[coor] = [1, 1, 1, 1]
@@ -271,9 +278,8 @@ class MazeGenerator:
         self.maze[start_x + 5, start_y + 1] = [1, 1, 1, 0]
         self.maze[start_x + 5, start_y + 3] = [1, 0, 1, 1]
 
-        errors = []
+        errors: list[str] = []
         if self.entry in self.isolated:
-            ic("test")
             errors.append("entry")
 
         if self.exit in self.isolated:
@@ -284,7 +290,7 @@ class MazeGenerator:
                 f"Error: {', '.join(errors)} inside the 42's pattern"
             )
 
-    def create_grid(self):
+    def create_grid(self) -> None:
         self.maze_grid = [[' '] * ((self.width + 1) + (self.width * 3))
                           for _ in range(self.height * 2 + 1)]
 
@@ -292,7 +298,7 @@ class MazeGenerator:
         self.maze_grid[(self.exit[1] * 2) + 1][(self.exit[0] * 4) + 2] = 'X'
 
     def show_hide_solution(self) -> None:
-        maze_grid = self.maze_grid
+        maze_grid: MazeGrid = self.maze_grid
 
         def add_remove_arrows(path, movs, remove: bool = False,
                               animation: bool = False) -> None:
@@ -323,7 +329,7 @@ class MazeGenerator:
                 self.print_maze(maze_grid, self.first_frame)
 
         def add_char(char: str, coor: tuple[int, int],
-                     maze_grid: dict) -> None:
+                     maze_grid: MazeGrid) -> None:
             maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
 
         def add_chars(coords: list, char: str, maze_grid: dict,
@@ -340,10 +346,10 @@ class MazeGenerator:
 
         if self.solution_hidden:
             self.solution_hidden = False
-            animation = False
+            animation: bool = False
 
             if self.show_animation:
-                animation = True
+                animation: bool = True
 
                 add_chars(self.maze, '◦', maze_grid, animation=animation)
                 add_chars(self.shortest_sol[1], '○', maze_grid,
@@ -361,11 +367,12 @@ class MazeGenerator:
             add_chars(self.maze, ' ', maze_grid)
             add_remove_arrows(self.shortest_sol[1], self.shortest_sol[0], True)
 
-    def parse_vertices(self):
-        maze: dict = self.maze
+    def parse_vertices(self) -> None:
+        maze: Maze = self.maze
         width: int = self.width
         height: int = self.height
-        vertices: dict[tuple[int, int], list[int]] = {}
+        vertices: Maze = {}
+
         for y in range(height):
             for x in range(width):
                 N = maze[x, y - 1][3] if y - 1 >= 0 else 0
@@ -392,7 +399,7 @@ class MazeGenerator:
             vertices[width, y] = (N, E, S, W)
 
         vertices[width, height] = (1, 0, 0, 1)
-        parsed_coor = {}
+        parsed_coor: dict[Coor, str] = {}
         for coor in vertices:
             key = vertices[coor]
             parsed_coor[coor] = (self.colour + self.MAZE_CHARS[key]
@@ -401,7 +408,7 @@ class MazeGenerator:
         self.parsed_coor = parsed_coor
         return parsed_coor
 
-    def render_maze(self):
+    def render_maze(self) -> None:
         maze_grid = self.maze_grid
         for coor in self.parse_vertices():
             x, y = coor
@@ -425,14 +432,16 @@ class MazeGenerator:
         self.print_maze(maze_grid, self.first_frame)
         self.first_frame = False
 
-    def animate(self):
-        maze_grid = self.maze_grid
-        coords = self.maze
+    def animate(self) -> None:
+        maze_grid: MazeGrid = self.maze_grid
+        coords: Maze = self.maze
 
         for coor in coords:
+            x: int
+            y: int
             x, y = coor
-            x_ = x * 4
-            y_ = y * 2
+            x_mapped: int = x * 4
+            y_mapped: int = y * 2
 
             if self.solutions:
                 maze_grid[y * 2][x * 4] = self.parsed_coor[coor]
@@ -440,24 +449,24 @@ class MazeGenerator:
             if coor in self.maze:
                 if self.maze[x, y][0] == 1:
                     for w in range(1, 3 + 1):
-                        maze_grid[y_][x_ + w] = '─'
+                        maze_grid[y_mapped][x_mapped + w] = '─'
                 else:
                     for w in range(1, 3 + 1):
-                        maze_grid[y_][x_ + w] = ' '
+                        maze_grid[y_mapped][x_mapped + w] = ' '
                 if self.maze[x, y][1] == 1:
-                    maze_grid[y_ + 1][x_ + 4] = '│'
+                    maze_grid[y_mapped + 1][x_mapped + 4] = '│'
                 else:
-                    maze_grid[y_ + 1][x_ + 4] = ' '
+                    maze_grid[y_mapped + 1][x_mapped + 4] = ' '
                 if self.maze[x, y][2] == 1:
                     for w in range(1, 3 + 1):
-                        maze_grid[y_ + 2][x_ + w] = '─'
+                        maze_grid[y_mapped + 2][x_mapped + w] = '─'
                 else:
                     for w in range(1, 3 + 1):
-                        maze_grid[y_ + 2][x_ + w] = ' '
+                        maze_grid[y_mapped + 2][x_mapped + w] = ' '
                 if self.maze[x, y][3] == 1:
-                    maze_grid[y_ + 1][x_] = '│'
+                    maze_grid[y_mapped + 1][x_mapped] = '│'
                 else:
-                    maze_grid[y_ + 1][x_] = ' '
+                    maze_grid[y_mapped + 1][x_mapped] = ' '
             self.print_maze(maze_grid, self.first_frame)
             if self.first_frame:
                 self.first_frame = False
@@ -472,20 +481,20 @@ class MazeGenerator:
 
         sys.stdout.flush()
 
-    def change_walls_colour(self):
+    def change_walls_colour(self) -> None:
         self.colour = next(self.colour_iter)
         self.parse_vertices()
         self.render_maze()
 
     def bitmask_output(self) -> None:
         result: str = ""
-
-        sorted_maze = dict(
+        sorted_maze: Maze = dict(
             sorted(self.maze.items(),
                    key=lambda item: (item[0][1], item[0][0]))
             )
+
         for coor, walls in sorted_maze.items():
-            mask = (
+            mask: int = (
                 (walls[0] << 0) |
                 (walls[1] << 1) |
                 (walls[2] << 2) |
@@ -500,14 +509,14 @@ class MazeGenerator:
                    f"{self.exit[0]},{self.exit[1]}\n"
                    f"{''.join(mov.value for mov in self.shortest_sol[0])}"
                    )
-        print(result)
+
         self.output = result
 
     def generate(self, width: int, height: int, unique_sol: bool, seed: int,
-                 entry: Coor, exit: Coor, show_animation: bool = False):
+                 entry: Coor, exit_coor: Coor, show_animation: bool = False):
         # Add this to a setter?
         self.entry = entry
-        self.exit = exit
+        self.exit = exit_coor
         self.width = width
         self.height = height
         self.unique_sol = unique_sol
@@ -520,7 +529,7 @@ class MazeGenerator:
         self.create_grid()
         self.maze_generation()
         self.render_maze()
-        self.solve_maze(entry, exit)
+        self.solve_maze(entry, exit_coor)
         self.shortest_solution()
         self.bitmask_output()
 
