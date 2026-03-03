@@ -238,9 +238,8 @@ class MazeGenerator:
         start_y = (self.height - pattern_height) // 2
 
         def isolate_celds(coor):
-            if coor != self.entry and coor != self.exit:
-                self.maze[coor] = [1, 1, 1, 1]
-                self.isolated.append(coor)
+            self.maze[coor] = [1, 1, 1, 1]
+            self.isolated.append(coor)
 
         isolate_celds((start_x, start_y))
         isolate_celds((start_x, start_y + 1))
@@ -265,6 +264,19 @@ class MazeGenerator:
         self.maze[start_x + 1, start_y + 1] = [0, 1, 1, 1]
         self.maze[start_x + 5, start_y + 1] = [1, 1, 1, 0]
         self.maze[start_x + 5, start_y + 3] = [1, 0, 1, 1]
+
+        errors = []
+        if self.entry in self.isolated:
+            ic("test")
+            errors.append("entry")
+
+        if self.exit in self.isolated:
+            errors.append("exit")
+
+        if errors:
+            raise ValueError(
+                f"Error: {', '.join(errors)} inside the 42's pattern"
+            )
 
     def create_grid(self):
         self.maze_grid = [[' '] * ((self.width + 1) + (self.width * 3))
@@ -486,4 +498,4 @@ class MazeGenerator:
 
 
 maze_gen = MazeGenerator()
-maze_gen.generate(12, 12, False, (0, 0), (7, 7), True)
+maze_gen.generate(12, 12, False, (0, 0), (7, 7), False)
