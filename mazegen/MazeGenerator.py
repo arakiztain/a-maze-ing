@@ -1,10 +1,12 @@
 from icecream import ic
-from typing import Callable
+from typing import Iterator
 from enum import Enum
 import random
 import sys
 import time
 from itertools import cycle
+
+Coor = tuple[int, int]
 
 
 class MazeGenerator:
@@ -14,30 +16,30 @@ class MazeGenerator:
         self.width = None
         self.height = None
         self.unique_sol = None
-        self.path: list[tuple[int, int]] = []
-        self.no_exit = []
+        self.path: list[Coor] = []
+        self.no_exit: list[Coor] = []
         self.perfect: bool = False
-        self.solution_path: tuple[tuple[int, int]] = ()
+        self.solution_path: tuple[Coor] = ()
         self.maze: dict[tuple, list[int]] = {}
         self.solutions: set[tuple] = set()
         self.exit_found = False
-        self.isolated = []
+        self.isolated: list[Coor] = []
         self.shortest_sol: tuple[tuple, tuple] = None
         self.maze_grid = None
         self.parsed_coor = {}
-        self.first_frame = True
+        self.first_frame: bool = True
         self.show_animation: bool = True
-        self.solution_hidden = True
+        self.solution_hidden: bool = True
         self.colour: str = ''
-        self.colour_iter = cycle(self.COLOURS)
+        self.colour_iter: Iterator = cycle(self.COLOURS)
 
-    class MOVES(Enum):
+    class Moves(Enum):
         N = 'N'
         E = 'E'
         S = 'S'
         W = 'W'
 
-    COLOURS = (
+    COLOURS: tuple[str] = (
         "\033[91m",
         "\033[92m",
         "\033[93m",
@@ -46,9 +48,9 @@ class MazeGenerator:
         "\033[96m",
     )
 
-    RESET = "\033[0m"
+    RESET: str = "\033[0m"
 
-    maze_chars: dict[tuple, str] = {
+    MAZE_CHARS: dict[tuple[int, ...], str] = {
             (0, 0, 0, 0): ' ',
             (0, 0, 1, 1): '┐',
             (0, 1, 1, 0): '┌',
@@ -63,35 +65,40 @@ class MazeGenerator:
             (1, 1, 1, 1): '┼'
         }
 
-    def move(self, coordinates: tuple[int, int],
-             move: MOVES) -> tuple[int, int]:
-        MOVE: dict[str, Callable] = {
-            self.MOVES.N: lambda x, y: (x, y - 1),
-            self.MOVES.E: lambda x, y: (x + 1, y),
-            self.MOVES.S: lambda x, y: (x, y + 1),
-            self.MOVES.W: lambda x, y: (x - 1, y)
+    def move(self, coordinates: Coor,
+             move: Moves) -> Coor:
+        deltas: dict[MazeGenerator.Moves, tuple] = {
+            self.Moves.N: (0, -1),
+            self.Moves.E: (1, 0),
+            self.Moves.S: (0, 1),
+            self.Moves.W: (-1, 0)
         }
         x: int
         y: int
-        x, y = coordinates
-        return MOVE[move](x, y)
+        dx: int
+        dy: int
 
-    def valid_move(self, coordinates: tuple, move: MOVES) -> bool:
-        VALID_MOVES: dict[str, Callable] = {
-            self.MOVES.N: lambda x, y: self.maze[(x, y)][0] == 0,
-            self.MOVES.E: lambda x, y: self.maze[(x, y)][1] == 0,
-            self.MOVES.S: lambda x, y: self.maze[(x, y)][2] == 0,
-            self.MOVES.W: lambda x, y: self.maze[(x, y)][3] == 0,
+        dx, dy = deltas[move]
+        x, y = coordinates
+        return x + dx, y + dy
+
+    def valid_move(self, coordinates: tuple, move: Moves) -> bool:
+        move_index: dict[MazeGenerator.Moves, int] = {
+            self.Moves.N: 0,
+            self.Moves.E: 1,
+            self.Moves.S: 2,
+            self.Moves.W: 3
         }
+
         x: int
         y: int
         x, y = coordinates
-        return VALID_MOVES[move](x, y)
+        return self.maze[x, y][move_index[move]] == 0
 
     def solve_maze(self, curr_coor: tuple[int, int],
-                   exit: tuple[int, int], move: MOVES | None = None,
+                   exit: tuple[int, int], move: Moves | None = None,
                    movs: tuple[str, ...] = (),
-                   path: tuple[tuple, ...] = ()) -> bool:
+                   path: tuple[tuple, ...] = ()) -> None:
 
         if curr_coor == exit:
             if movs[:-1] not in self.solutions:
@@ -99,20 +106,20 @@ class MazeGenerator:
             return
         if move is not None:
             if not self.valid_move(curr_coor, move):
-                return False
+                return
 
             curr_coor: tuple[int, int] = self.move(curr_coor, move)
 
             if curr_coor in path or curr_coor not in self.maze:
                 return False
 
-        for move in list(self.MOVES):
+        for move in list(self.Moves):
             self.solve_maze(curr_coor, exit, move, movs + (move,),
                             path + (curr_coor,))
         return
 
     def maze_generation(self):
-        def add_walls(coor: tuple, mov: MazeGenerator.MOVES | None) -> None:
+        def add_walls(coor: tuple, mov: MazeGenerator.Moves | None) -> None:
             if coor not in self.maze:
                 walls: list[int | None] = [None, None, None, None]
                 x, y = coor
@@ -129,13 +136,13 @@ class MazeGenerator:
 
             if mov:
                 match mov:
-                    case self.MOVES.N:
+                    case self.Moves.N:
                         walls[0] = 0
-                    case self.MOVES.E:
+                    case self.Moves.E:
                         walls[1] = 0
-                    case self.MOVES.S:
+                    case self.Moves.S:
                         walls[2] = 0
-                    case self.MOVES.W:
+                    case self.Moves.W:
                         walls[3] = 0
 
             for i, wall in enumerate(walls):
@@ -146,19 +153,19 @@ class MazeGenerator:
             if self.show_animation:
                 self.animate()
 
-        def remove_walls(coor: tuple, mov: MazeGenerator.MOVES | None):
+        def remove_walls(coor: tuple, mov: MazeGenerator.Moves | None):
             x, y = coor
             match mov:
-                case self.MOVES.N:
+                case self.Moves.N:
                     self.maze[coor][0] = 0
                     self.maze[x, y - 1][2] = 0
-                case self.MOVES.E:
+                case self.Moves.E:
                     self.maze[coor][1] = 0
                     self.maze[x + 1, y][3] = 0
-                case self.MOVES.S:
+                case self.Moves.S:
                     self.maze[coor][2] = 0
                     self.maze[x, y + 1][0] = 0
-                case self.MOVES.W:
+                case self.Moves.W:
                     self.maze[coor][3] = 0
                     self.maze[x - 1, y][1] = 0
 
@@ -167,7 +174,7 @@ class MazeGenerator:
             random.shuffle(celds)
             count = 0
             for celd in celds:
-                for mov in list(self.MOVES):
+                for mov in list(self.Moves):
                     if valid_move(celd, mov, [], True):
                         remove_walls(celd, mov)
                         if self.show_animation:
@@ -191,7 +198,7 @@ class MazeGenerator:
                     next_coor not in self.isolated)
 
         def path_generation(curr: tuple[int, int],
-                            solution: tuple[MazeGenerator.MOVES] = (),
+                            solution: tuple[MazeGenerator.Moves] = (),
                             path: tuple[tuple[int, int], ...]
                             = (self.entry,)) -> None:
 
@@ -200,7 +207,7 @@ class MazeGenerator:
                 self.solution_path = path
                 return
 
-            moves: list = list(self.MOVES)
+            moves: list = list(self.Moves)
             random.shuffle(moves)
 
             no_moves = True
@@ -222,8 +229,6 @@ class MazeGenerator:
         path_generation(self.entry)
         if not self.unique_sol:
             create_alt_path()
-        # self.solve_maze(self.entry, self.exit)
-        # self.shortest_solution()
 
     def shortest_solution(self) -> None:
         if not self.solutions:
@@ -292,19 +297,19 @@ class MazeGenerator:
                               animation: bool = False) -> None:
             for coor, mov in zip(path, movs):
                 match mov:
-                    case self.MOVES.N:
+                    case self.Moves.N:
                         arrow = '↑'
                         x = (coor[0] * 4) + 2
                         y = (coor[1] * 2)
-                    case self.MOVES.E:
+                    case self.Moves.E:
                         arrow = '→'
                         x = (coor[0] * 4) + 4
                         y = (coor[1] * 2) + 1
-                    case self.MOVES.S:
+                    case self.Moves.S:
                         arrow = '↓'
                         x = (coor[0] * 4) + 2
                         y = (coor[1] * 2) + 2
-                    case self.MOVES.W:
+                    case self.Moves.W:
                         arrow = '←'
                         x = (coor[0] * 4)
                         y = (coor[1] * 2) + 1
@@ -391,9 +396,9 @@ class MazeGenerator:
         parsed_coor = {}
         for coor in vertices:
             key = vertices[coor]
-            parsed_coor[coor] = (self.colour + self.maze_chars[key]
+            parsed_coor[coor] = (self.colour + self.MAZE_CHARS[key]
                                  + self.RESET
-                                 if key in self.maze_chars else ' ')
+                                 if key in self.MAZE_CHARS else ' ')
         self.parsed_coor = parsed_coor
         return parsed_coor
 
@@ -490,10 +495,6 @@ class MazeGenerator:
         self.create_grid()
         self.maze_generation()
         self.render_maze()
-        time.sleep(3)
-        self.show_hide_solution()
-        time.sleep(3)
-        self.show_hide_solution()
 
         # Restore to default the instance attributes once finished to be reusable
 
