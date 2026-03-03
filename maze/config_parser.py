@@ -71,5 +71,4 @@ def parse_config(path: str) -> MazeConfig:
                 )
         config_dict[key.lower()] = value
 
-    # print(config_dict)
     return MazeConfig(**config_dict)
