@@ -30,8 +30,9 @@ class MazeGenerator:
         self.first_frame: bool = True
         self.show_animation: bool = True
         self.solution_hidden: bool = True
-        self.colour: str = ''
+        self.colour: str = ""
         self.colour_iter: Iterator = cycle(self.COLOURS)
+        self.output: str = ""
 
     class Moves(Enum):
         N = 'N'
@@ -341,9 +342,7 @@ class MazeGenerator:
             self.solution_hidden = False
             animation = False
 
-            if not self.shortest_sol:
-                self.solve_maze(self.entry, self.exit)
-                self.shortest_solution()
+            if self.show_animation:
                 animation = True
 
                 add_chars(self.maze, '◦', maze_grid, animation=animation)
@@ -478,8 +477,34 @@ class MazeGenerator:
         self.parse_vertices()
         self.render_maze()
 
+    def bitmask_output(self) -> None:
+        result: str = ""
+
+        sorted_maze = dict(
+            sorted(self.maze.items(),
+                   key=lambda item: (item[0][1], item[0][0]))
+            )
+        for coor, walls in sorted_maze.items():
+            mask = (
+                (walls[0] << 0) |
+                (walls[1] << 1) |
+                (walls[2] << 2) |
+                (walls[3] << 3)
+            )
+
+            result += format(mask, 'X')
+
+            if coor[0] == self.width - 1:
+                result += '\n'
+        result += (f"\n{self.entry[0]},{self.entry[1]}\n"
+                   f"{self.exit[0]},{self.exit[1]}\n"
+                   f"{''.join(mov.value for mov in self.shortest_sol[0])}"
+                   )
+        print(result)
+        self.output = result
+
     def generate(self, width: int, height: int, unique_sol: bool, seed: int,
-                 entry: tuple, exit: tuple, show_animation: bool = False):
+                 entry: Coor, exit: Coor, show_animation: bool = False):
         # Add this to a setter?
         self.entry = entry
         self.exit = exit
@@ -495,6 +520,9 @@ class MazeGenerator:
         self.create_grid()
         self.maze_generation()
         self.render_maze()
+        self.solve_maze(entry, exit)
+        self.shortest_solution()
+        self.bitmask_output()
 
         # Restore to default the instance attributes once finished to be reusable
 
