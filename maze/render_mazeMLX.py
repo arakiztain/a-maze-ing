@@ -13,10 +13,10 @@ def load_maze(path):
     with open(path) as f:
         lines = [line.strip() for line in f if line.strip()]
 
-    maze_lines = lines[:-3]
-    entry_line = lines[-3]
-    exit_line = lines[-2]
-    path_line = lines[-1]
+    path_line = lines[-2]
+    exit_line = lines[-3]
+    entry_line = lines[-4]
+    maze_lines = lines[:-4]
 
     maze = [[int(c, 16) for c in row] for row in maze_lines]
     entry = tuple(map(int, entry_line.split(',')))
@@ -79,7 +79,7 @@ def path_to_coords(entry, path):
     return coords
 
 def main() -> None:
-	maze, entry, exit_, path = load_maze("../maze.txt")
+	maze, entry, exit_, path = load_maze("maze.txt")
 	rows = len(maze)
 	cols = len(maze[0])
 	coords = path_to_coords(entry, path)

@@ -38,6 +38,7 @@ class MazeGenerator:
         self.colour: str = ""
         self.colour_iter: Iterator = cycle(self.COLOURS)
         self.output: str = ""
+        self.seed: int = None
 
     class Moves(Enum):
         N = 'N'
@@ -480,6 +481,7 @@ class MazeGenerator:
             sys.stdout.write("".join(row) + '\n')
 
         sys.stdout.flush()
+        self.first_frame = False
 
     def change_walls_colour(self) -> None:
         self.colour = next(self.colour_iter)
@@ -507,19 +509,21 @@ class MazeGenerator:
                 result += '\n'
         result += (f"\n{self.entry[0]},{self.entry[1]}\n"
                    f"{self.exit[0]},{self.exit[1]}\n"
-                   f"{''.join(mov.value for mov in self.shortest_sol[0])}"
+                   f"{''.join(mov.value for mov in self.shortest_sol[0])}\n"
+                   f"{self.seed}"
                    )
 
         self.output = result
 
     def generate(self, width: int, height: int, unique_sol: bool, seed: int,
-                 entry: Coor, exit_coor: Coor, show_animation: bool = False):
+                 entry: Coor, exit_coor: Coor, output_file: str, show_animation: bool = False):
         # Add this to a setter?
         self.entry = entry
         self.exit = exit_coor
         self.width = width
         self.height = height
         self.unique_sol = unique_sol
+        self.seed = seed
         self.path.append(entry)
         self.show_animation = show_animation
 
@@ -532,9 +536,11 @@ class MazeGenerator:
         self.solve_maze(entry, exit_coor)
         self.shortest_solution()
         self.bitmask_output()
+        with open(output_file, "w") as f:
+            f.write(self.output)
 
         # Restore to default the instance attributes once finished to be reusable
 
 
-maze_gen = MazeGenerator()
-maze_gen.generate(12, 12, False, 1234, (0, 0), (11, 11), False)
+# maze_gen = MazeGenerator()
+# maze_gen.generate(12, 12, False, 1234, (0, 0), (11, 11), False)
