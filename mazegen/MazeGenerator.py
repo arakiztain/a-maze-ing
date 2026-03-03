@@ -473,7 +473,7 @@ class MazeGenerator:
         self.parse_vertices()
         self.render_maze()
 
-    def generate(self, width: int, height: int, unique_sol: bool,
+    def generate(self, width: int, height: int, unique_sol: bool, seed: int,
                  entry: tuple, exit: tuple, show_animation: bool = False):
         # Add this to a setter?
         self.entry = entry
@@ -486,6 +486,7 @@ class MazeGenerator:
 
         if self.width >= 8 and self.height >= 6:
             self.add_42_pattern()
+        random.seed(seed)
         self.create_grid()
         self.maze_generation()
         self.render_maze()
@@ -498,4 +499,4 @@ class MazeGenerator:
 
 
 maze_gen = MazeGenerator()
-maze_gen.generate(12, 12, False, (0, 0), (7, 7), False)
+maze_gen.generate(12, 12, False, 1234, (0, 0), (11, 11), False)
