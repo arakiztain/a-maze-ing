@@ -18,6 +18,7 @@ class MazeConfig:
     output_file: str = Field(...)
     perfect: bool = Field(default=True)
     seed: int | None = Field(default=None)
+    user_set_seed: bool = Field(default=False)
 
     @model_validator(mode="after")
     def entry_validator(self):
@@ -43,6 +44,8 @@ class MazeConfig:
 
         if self.seed is None:
             self.seed = random.randint(0, 999999)
+        else:
+            self.user_set_seed = True
 
         return self
 

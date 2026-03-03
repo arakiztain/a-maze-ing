@@ -481,6 +481,7 @@ class MazeGenerator:
             sys.stdout.write("".join(row) + '\n')
 
         sys.stdout.flush()
+        self.first_frame = False
 
     def change_walls_colour(self) -> None:
         self.colour = next(self.colour_iter)
