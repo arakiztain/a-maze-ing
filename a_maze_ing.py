@@ -3,6 +3,7 @@ from icecream import ic
 from typing import Callable, Any
 from maze.config_parser import parse_config
 from mazegen.MazeGenerator import MazeGenerator
+import os
 # from maze.render_mazeMLX import main as maze_render
 
 def cli_loop(maze_gen: MazeGenerator, config, config_path: str, user_set_seed: bool) -> None:
@@ -40,8 +41,9 @@ def cli_loop(maze_gen: MazeGenerator, config, config_path: str, user_set_seed: b
                 maze_gen.first_frame = True
                 maze_gen.change_walls_colour()
             case "4":
-                from maze.render_mazeMLX import main as maze_render
-                maze_render()
+                os.system("python3 maze/render_mazeMLX.py &")
+                print("\n Generating maze with mlx...")
+                input("\nPress enter to return to menu...")
             # case "5":
             #     maze_gen.first_frame = True
             #     maze_gen.change_42_colour()
