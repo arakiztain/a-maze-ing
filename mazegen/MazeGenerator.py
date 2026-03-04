@@ -30,7 +30,7 @@ class MazeGenerator:
     shortest_sol: Solution
     maze_grid: MazeGrid
     parsed_coor: dict[Coor, str]
-    first_frame: bool = True
+    first_frame: bool
     show_animation: bool
     solution_hidden: bool
     colour: str
@@ -536,6 +536,7 @@ class MazeGenerator:
         self.parsed_coor = {}
         self.solution_hidden = True
         self.colour = ""
+        self.first_frame: bool = True
 
         if self.width >= 8 and self.height >= 6:
             self.add_42_pattern()
