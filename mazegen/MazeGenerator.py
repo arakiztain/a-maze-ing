@@ -481,13 +481,10 @@ class MazeGenerator:
                 self.first_frame = False
 
     def print_maze(self, maze: list, first_frame: bool) -> None:
-
         if not first_frame:
-            sys.stdout.write("\033[F" * (len(maze)))
-
+            sys.stdout.write("\033[F" * len(maze))
         for row in maze:
             sys.stdout.write("".join(row) + '\n')
-
         sys.stdout.flush()
         self.first_frame = False
 
@@ -526,6 +523,7 @@ class MazeGenerator:
     def generate(self, width: int, height: int, unique_sol: bool, seed: int,
                  entry: Coor, exit_coor: Coor, output_file: str,
                  show_animation: bool = False):
+        sys.setrecursionlimit(width * height * 10)
         self.entry = entry
         self.exit_coor = exit_coor
         self.width = width

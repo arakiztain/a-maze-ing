@@ -2,6 +2,7 @@ from pydantic.dataclasses import dataclass as pydantic_dataclass
 from pydantic import Field, model_validator
 from typing import Tuple
 import random
+import shutil
 
 
 class ConfigError(Exception):
@@ -11,8 +12,8 @@ class ConfigError(Exception):
 
 @pydantic_dataclass
 class MazeConfig:
-    width: int = Field(..., ge=0, le=10000)
-    height: int = Field(..., ge=0, le=10000)
+    width: int = Field(..., ge=1, le=46)
+    height: int = Field(..., ge=1, le=46)
     entry: Tuple[int, int] = Field(...)
     exit: Tuple[int, int] = Field(...)
     output_file: str = Field(...)
@@ -25,23 +26,30 @@ class MazeConfig:
     def entry_validator(self):
         entry_x, entry_y = self.entry
         exit_x, exit_y = self.exit
+        cols, rows = shutil.get_terminal_size()
+        max_width = (cols - 1) // 4
+        max_height = (rows - 1) // 2
 
         errors = []
 
-        if (entry_x >= self.width or entry_y >= self.height):
+        # if self.width > max_width or self.height > max_height:
+        #     errors.append(
+        #         f"Maze too large for terminal: max {max_width}x{max_height},"
+        #         f" got {self.width}x{self.height}"
+        #     )
+        if entry_x >= self.width or entry_y >= self.height:
             errors.append(
                 f"Entry {self.entry} out of the limits:"
                 f" ({self.width}, {self.height})"
-                )
-        if (exit_x >= self.width or exit_y >= self.height):
+            )
+        if exit_x >= self.width or exit_y >= self.height:
             errors.append(
                 f"Exit {self.exit} out of the limits:"
                 f" ({self.width}, {self.height})"
-                )
+            )
 
         if errors:
             raise ConfigError("; ".join(errors))
-        
 
         if self.seed is None:
             self.seed = random.randint(0, 999999)
