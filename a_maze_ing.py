@@ -3,6 +3,7 @@ from icecream import ic
 from typing import Callable, Any
 from maze.config_parser import parse_config
 from mazegen.MazeGenerator import MazeGenerator
+import os
 # from maze.render_mazeMLX import main as maze_render
 
 def cli_loop(maze_gen: MazeGenerator, config, config_path: str, user_set_seed: bool) -> None:
@@ -14,6 +15,7 @@ def cli_loop(maze_gen: MazeGenerator, config, config_path: str, user_set_seed: b
         print("2. Show/hide path from entry to exit")
         print("3. Rotate maze colors")
         print("4. Run mlx display")
+        # print("5. Change 42 color")
         print("5. Exit")
 
         choice = input("Choice? (1-5): ").strip()
@@ -30,6 +32,7 @@ def cli_loop(maze_gen: MazeGenerator, config, config_path: str, user_set_seed: b
                     entry=config.entry,
                     exit_coor=config.exit,
                     output_file=config.output_file,
+                    show_animation=config.animation
                 )
             case "2":
                 maze_gen.first_frame = True
@@ -38,13 +41,17 @@ def cli_loop(maze_gen: MazeGenerator, config, config_path: str, user_set_seed: b
                 maze_gen.first_frame = True
                 maze_gen.change_walls_colour()
             case "4":
-                from maze.render_mazeMLX import main as maze_render
-                maze_render()
+                os.system("python3 maze/render_mazeMLX.py &")
+                print("\n Generating maze with mlx...")
+                input("\nPress enter to return to menu...")
+            # case "5":
+            #     maze_gen.first_frame = True
+            #     maze_gen.change_42_colour()
             case "5":
                 print("Bye!")
                 sys.exit(0)
             case _:
-                print("Invalid option.")
+                print("Invalid option.\n")
 
     
 def main() -> None:
@@ -69,6 +76,7 @@ def main() -> None:
 			entry=r.entry,
 			exit_coor=r.exit,
             output_file=r.output_file,
+            show_animation=r.animation
 		)
 
         cli_loop(maze_gen, r, sys.argv[1], user_set_seed)

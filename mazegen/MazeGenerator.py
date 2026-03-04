@@ -289,6 +289,10 @@ class MazeGenerator:
                 f"Error: {', '.join(errors)} inside the 42's pattern"
             )
 
+    # def change_42_colour(self) -> None:
+    #     self.colour_42 = next(self.colour_42_iter)
+    #     self.render_maze()
+
     def create_grid(self) -> None:
         self.maze_grid = [[' '] * ((self.width + 1) + (self.width * 3))
                           for _ in range(self.height * 2 + 1)]
@@ -431,6 +435,9 @@ class MazeGenerator:
                                                      + self.RESET)
                 if self.maze[x, y][3] == 1:
                     maze_grid[y_ + 1][x_] = self.colour + '│' + self.RESET
+        for coor in self.isolated:
+            x, y = coor
+            self.maze_grid[(y * 2) + 1][(x * 4) + 2] = "\033[45m \033[0m"
         self.print_maze(maze_grid, self.first_frame)
         self.first_frame = False
 
@@ -542,6 +549,8 @@ class MazeGenerator:
             self.add_42_pattern()
         random.seed(seed)
         self.create_grid()
+        self.print_maze(self.maze_grid, self.first_frame)  # pinta el grid vacío
+        self.first_frame = False    
         self.maze_generation()
         self.render_maze()
         self.solve_maze(entry, exit_coor)

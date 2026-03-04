@@ -1,5 +1,6 @@
 from mlx import Mlx
 import time
+import os
 
 CELL = 40
 WALL_COLOR = 0x000000
@@ -78,49 +79,59 @@ def path_to_coords(entry, path):
         coords.append((x, y))
     return coords
 
+
+
 def main() -> None:
-	maze, entry, exit_, path = load_maze("maze.txt")
-	rows = len(maze)
-	cols = len(maze[0])
-	coords = path_to_coords(entry, path)
+    maze, entry, exit_, path = load_maze("maze.txt")
+    rows = len(maze)
+    cols = len(maze[0])
+    coords = path_to_coords(entry, path)
 
+    mlx = Mlx()
+    mlx_ptr = mlx.mlx_init()
+    width = cols*CELL
+    height = rows*CELL
+    win = mlx.mlx_new_window(mlx_ptr, width, height, "Maze")
+    img = mlx.mlx_new_image(mlx_ptr, width, height)
+    buf, bpp, size_line, format = mlx.mlx_get_data_addr(img)
+    buf = buf.cast('B')
 
-	mlx = Mlx()
-	mlx_ptr = mlx.mlx_init()
-	width = cols*CELL
-	height = rows*CELL
-	win = mlx.mlx_new_window(mlx_ptr, width, height, "Maze")
-	img = mlx.mlx_new_image(mlx_ptr, width, height)
-	buf, bpp, size_line, format = mlx.mlx_get_data_addr(img)
-	buf = buf.cast('B')
+    for y in range(rows):
+        for x in range(cols):
+            draw_cell(buf, bpp, size_line, x*CELL, y*CELL, maze[y][x], format=format)
 
+    ex, ey = entry
+    draw_cell(buf, bpp, size_line, ex*CELL, ey*CELL, maze[ey][ex], ENTRY_COLOR, format=format)
+    ex, ey = exit_
+    draw_cell(buf, bpp, size_line, ex*CELL, ey*CELL, maze[ey][ex], EXIT_COLOR, format=format)
 
-	for y in range(rows):
-		for x in range(cols):
-			draw_cell(buf, bpp, size_line, x*CELL, y*CELL, maze[y][x], format=format)
+    current_step = [0]
+    def loop_hook(param):
+        if current_step[0] >= len(coords):
+            return 0
+        x, y = coords[current_step[0]]
+        draw_cell(buf, bpp, size_line, x*CELL, y*CELL, maze[y][x], PATH_COLOR, format=format)
+        mlx.mlx_sync(mlx_ptr, 1, img)
+        mlx.mlx_put_image_to_window(mlx_ptr, win, img, 0, 0)
+        mlx.mlx_sync(mlx_ptr, 3, win)
+        current_step[0] += 1
+        time.sleep(0.05)
+        return 0
 
+    def key_hook(keycode, param):
+        if keycode == 65307:
+            mlx.mlx_destroy_window(mlx_ptr, win)
+            os._exit(0)
+        return 0
 
-	ex, ey = entry
-	draw_cell(buf, bpp, size_line, ex*CELL, ey*CELL, maze[ey][ex], ENTRY_COLOR, format=format)
-	ex, ey = exit_
-	draw_cell(buf, bpp, size_line, ex*CELL, ey*CELL, maze[ey][ex], EXIT_COLOR, format=format)
+    def close_hook(param):
+        os._exit(0)
 
-	# animation
-	current_step = [0]
-	def loop_hook(param):
-		if current_step[0] >= len(coords):
-			return 0
-		x, y = coords[current_step[0]]
-		draw_cell(buf, bpp, size_line, x*CELL, y*CELL, maze[y][x], PATH_COLOR, format=format)
-		mlx.mlx_sync(mlx_ptr, 1, img)
-		mlx.mlx_put_image_to_window(mlx_ptr, win, img, 0, 0)
-		mlx.mlx_sync(mlx_ptr, 3, win)
-		current_step[0] += 1
-		time.sleep(0.05)
-		return 0
+    mlx.mlx_key_hook(win, key_hook, None)
+    mlx.mlx_hook(win, 17, 0, close_hook, None)
+    mlx.mlx_loop_hook(mlx_ptr, loop_hook, None)
+    mlx.mlx_loop(mlx_ptr)
 
-	mlx.mlx_loop_hook(mlx_ptr, loop_hook, None)
-	mlx.mlx_loop(mlx_ptr)
      
-if "__name__" == "__main__":
+if __name__ == "__main__":
      main()

@@ -17,6 +17,7 @@ class MazeConfig:
     exit: Tuple[int, int] = Field(...)
     output_file: str = Field(...)
     perfect: bool = Field(default=True)
+    animation: bool | None = Field(default=False)
     seed: int | None = Field(default=None)
     user_set_seed: bool = Field(default=False)
 
@@ -71,6 +72,8 @@ def parse_config(path: str) -> MazeConfig:
         elif key in ["ENTRY", "EXIT"]:
             value = tuple(map(int, value.split(",")))
         elif key == "PERFECT":
+            value = value.lower() == "true"
+        elif key == "ANIMATION":
             value = value.lower() == "true"
         elif key == "SEED":
             value = (
