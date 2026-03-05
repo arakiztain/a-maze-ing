@@ -9,7 +9,7 @@ run:
 	$(PYTHON) a_maze_ing.py $(CONFIG)
 
 debug:
-	$(PYTHON) -m pdb a_maze_ing.py
+	$(PYTHON) -m pdb a_maze_ing.py $(CONFIG)
 
 clean:
 	find . -name "__pycache__" -type d -exec rm -rf {} +
