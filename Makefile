@@ -3,7 +3,7 @@ PYTHON := python3
 CONFIG ?= config.txt
 
 install:
-	$(PYTHON) -m pip install ".[dev]"
+	$(PYTHON) -m pip install -e ".[dev]"
 
 run:
 	$(PYTHON) a_maze_ing.py $(CONFIG)
