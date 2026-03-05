@@ -209,3 +209,11 @@ __marimo__/
 
 maze.txt
 config/config.txt
+
+# Mlx
+mlx_CLXV/*.o
+mlx_CLXV/a.out
+mlx_CLXV/src/*.o
+mlx_CLXV/*.whl
+mlx_CLXV/test/mlxtest
+mlx_CLXV/test/mlxspeed
