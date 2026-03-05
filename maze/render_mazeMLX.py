@@ -40,8 +40,8 @@ def load_maze(path: str) -> tuple[
     maze = [[int(c, 16) for c in row] for row in maze_lines]
     entry = tuple(map(int, entry_line.split(',')))
     exit_ = tuple(map(int, exit_line.split(',')))
-    path = list(path_line.strip())
-    return maze, entry, exit_, path  # type: ignore
+    solution_path: list[str] = list(path_line.strip())
+    return maze, entry, exit_, solution_path  # type: ignore
 
 
 def put_pixel(buf: Any, bpp: int, size_line: int,

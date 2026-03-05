@@ -17,18 +17,21 @@ Maze: TypeAlias = dict[Coor, list[int]]
 
 
 class MazeGenerator:
-    """A maze generator that creates, renders and solves mazes using recursive backtracking.
+    """A maze generator that creates, renders and solves mazes using recursive
+      backtracking.
 
-        This class generates random mazes with configurable dimensions, entry/exit
-        points, and an optional '42' pattern of isolated cells. It supports ASCII
-        terminal rendering with optional colour and animation, as well as exporting
-        the maze structure to a bitmask output file.
+        This class generates random mazes with configurable
+        dimensions, entry/exit points, and an optional '42' pattern of
+        isolated cells. It supports ASCII terminal rendering with optional
+        colour and animation, as well as exporting the maze structure to a
+        bitmask output file.
 
-        The maze is represented internally as a dictionary mapping (x, y) coordinates
-        to a list of 4 wall states [N, E, S, W], where 1 means the wall is closed
-        and 0 means it is open. The generator uses a depth-first search algorithm
-        with random shuffling to ensure full connectivity and no isolated cells
-        (except those forming the '42' pattern).
+        The maze is represented internally as a dictionary mapping (x, y)
+        coordinates to a list of 4 wall states [N, E, S, W], where 1 means
+        the wall is closed and 0 means it is open. The generator uses a
+        depth-first search algorithm with random shuffling to ensure full
+        connectivity and no isolated cells (except those forming the
+        '42' pattern).
 
         Attributes:
             entry: Entry point coordinates as (x, y).
@@ -38,20 +41,23 @@ class MazeGenerator:
             unique_sol: If True, alternative paths are created (imperfect maze).
             path: List of coordinates visited during generation.
             no_exit: List of dead-end coordinates reached during generation.
-            solution_path: Tuple of coordinates forming the first found solution.
+            solution_path: Tuple of coordinates forming the first found
+            solution.
             maze: Dictionary mapping (x, y) coordinates to wall state lists.
             solutions: Set of all solutions found, each as (moves, path) tuples.
             isolated: List of coordinates belonging to the '42' pattern.
             shortest_sol: The shortest solution as a (moves, path) tuple.
             maze_grid: 2D character grid used for ASCII rendering.
             parsed_coor: Mapping of coordinates to rendered corner characters.
-            first_frame: Whether the next print is the first frame (no cursor up).
+            first_frame: Whether the next print is the first frame
+            (no cursor up).
             show_animation: Whether to animate the generation step by step.
             solution_hidden: Whether the solution path is currently hidden.
             colour: ANSI escape code for the current wall colour.
             output: String content to write to the maze output file.
             seed: The random seed used for this generation.
-            enough_space: Whether the terminal is large enough to render the maze.
+            enough_space: Whether the terminal is large enough
+            to render the maze.
 
         Example:
             >>> from mazegen.MazeGenerator import MazeGenerator
@@ -278,8 +284,10 @@ class MazeGenerator:
             Returns:
                 True if within bounds, False otherwise.
             """
-            return (0 <= coor[0] <= self.width - 1 and
-                    0 <= coor[1] <= self.height - 1)
+            return bool(
+                0 <= coor[0] <= self.width - 1
+                and 0 <= coor[1] <= self.height - 1
+                )
 
         def valid_move(curr: Coor, mov: MazeGenerator.Moves,
                        path: list, alt_path: bool = False) -> bool:
@@ -297,9 +305,11 @@ class MazeGenerator:
             next_coor = self.move(curr, mov)
             alt_path_valid = (next_coor not in self.solution_path
                               if alt_path else True)
-            return (next_coor not in path and valid_celd(next_coor)
-                    and next_coor not in self.no_exit and alt_path_valid and
-                    next_coor not in self.isolated)
+            return bool(
+                next_coor not in path and valid_celd(next_coor)
+                and next_coor not in self.no_exit and alt_path_valid and
+                next_coor not in self.isolated
+                )
 
         def path_generation(curr: Coor,
                             solution: tuple[MazeGenerator.Moves, ...] = (),
@@ -554,8 +564,9 @@ class MazeGenerator:
                     maze_grid[y_ + 1][x_ + 4] = self.colour + '│' + self.RESET
                 if self.maze[x, y][2] == 1:
                     for w in range(1, 4):
-                        maze_grid[y_ + 2][x_ + w] = (self.colour + '─'
-                                                      + self.RESET)
+                        maze_grid[y_ + 2][x_ + w] = (
+                            self.colour + '─' + self.RESET
+                            )
                 if self.maze[x, y][3] == 1:
                     maze_grid[y_ + 1][x_] = self.colour + '│' + self.RESET
         for coor in self.isolated:

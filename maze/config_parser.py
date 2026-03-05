@@ -1,6 +1,6 @@
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 from pydantic import Field, model_validator
-from typing import Tuple
+from typing import Tuple, Any
 import random
 import os
 
@@ -152,7 +152,7 @@ def parse_config(path: str) -> MazeConfig:
         print(f"Error: {e}")
         return None  # type: ignore
 
-    config_dict: dict[str, object] = {}
+    config_dict: dict[str, Any] = {}
     for line in data:
         if not line.strip() or line.startswith("#"):
             continue

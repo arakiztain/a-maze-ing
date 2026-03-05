@@ -36,7 +36,8 @@ def cli_loop(
         match choice:
             case "1":
                 config = parse_config(config_path)
-                maze_gen.__init__()
+                maze_gen = MazeGenerator()
+                assert config.seed is not None
                 maze_gen.generate(
                     width=config.width,
                     height=config.height,
@@ -45,7 +46,7 @@ def cli_loop(
                     entry=config.entry,
                     exit_coor=config.exit,
                     output_file=config.output_file,
-                    show_animation=config.animation
+                    show_animation=config.animation or False
                 )
             case "2":
                 maze_gen.first_frame = True
@@ -79,6 +80,7 @@ def main() -> None:
         r: MazeConfig = parse_config(sys.argv[1])
         user_set_seed: bool = r.user_set_seed
         maze_gen: MazeGenerator = MazeGenerator()
+        assert r.seed is not None
         maze_gen.generate(
             width=r.width,
             height=r.height,
@@ -87,7 +89,7 @@ def main() -> None:
             entry=r.entry,
             exit_coor=r.exit,
             output_file=r.output_file,
-            show_animation=r.animation
+            show_animation=r.animation or False
         )
 
         cli_loop(maze_gen, r, sys.argv[1], user_set_seed)

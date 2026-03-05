@@ -34,7 +34,8 @@ exclude = [
   ".mypy_cache",
   ".venv",
   "build",
-  "dist"
+  "dist",
+  "mlx_CLXV/"
 ]
 
 [tool.mypy]
@@ -46,5 +47,6 @@ disallow_untyped_defs = true
 check_untyped_defs = true
 exclude = [
   "build/",
-  "dist/"
+  "dist/",
+  "mlx_CLXV/"
 ]
