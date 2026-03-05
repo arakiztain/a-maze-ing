@@ -27,7 +27,7 @@ def cli_loop(maze_gen: MazeGenerator, config, config_path: str, user_set_seed: b
                 maze_gen.generate(
                     width=config.width,
                     height=config.height,
-                    unique_sol=not config.perfect,
+                    unique_sol= config.perfect,
                     seed=config.seed,
                     entry=config.entry,
                     exit_coor=config.exit,

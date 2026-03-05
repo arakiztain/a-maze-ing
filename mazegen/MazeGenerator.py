@@ -234,7 +234,7 @@ class MazeGenerator:
             return
 
         path_generation(self.entry)
-        if not self.unique_sol:
+        if self.unique_sol:
             create_alt_path()
 
     def shortest_solution(self) -> None:

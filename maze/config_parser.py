@@ -12,8 +12,8 @@ class ConfigError(Exception):
 
 @pydantic_dataclass
 class MazeConfig:
-    width: int = Field(..., ge=1, le=46)
-    height: int = Field(..., ge=1, le=46)
+    width: int = Field(..., ge=2, le=46)
+    height: int = Field(..., ge=2, le=46)
     entry: Tuple[int, int] = Field(...)
     exit: Tuple[int, int] = Field(...)
     output_file: str = Field(...)
