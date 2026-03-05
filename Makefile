@@ -1,6 +1,6 @@
 .PHONY: install run debug clean lint lint-strict
 PYTHON := python3
-CONFIG ?= config.txt
+CONFIG ?= config/config.txt
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
