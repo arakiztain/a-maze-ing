@@ -18,6 +18,10 @@ Maze: TypeAlias = dict[Coor, list[int]]
 
 
 def enough_space(func: Callable[..., None]) -> Callable:
+    """Decorator to check if the terminal has enough space
+    to render the maze.
+    If not, it will print a message with the maximum
+    allowed size and the current size."""
     @wraps(func)
     def wrapper(self: "MazeGenerator") -> None:
         term_cols: int
