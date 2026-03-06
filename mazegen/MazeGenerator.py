@@ -1,11 +1,12 @@
 from __future__ import annotations
-from typing import Iterator, TypeAlias, Iterable
+from typing import Iterator, TypeAlias, Iterable, Callable
 from enum import Enum
 import random
 import sys
 import time
 from itertools import cycle
 import shutil
+from functools import wraps
 
 Coor: TypeAlias = tuple[int, int]
 Solution: TypeAlias = tuple[
@@ -14,6 +15,29 @@ Solution: TypeAlias = tuple[
 Solutions: TypeAlias = set[Solution]
 MazeGrid: TypeAlias = list[list[str]]
 Maze: TypeAlias = dict[Coor, list[int]]
+
+
+def enough_space(func: Callable[..., None]) -> Callable:
+    """Decorator to check if the terminal has enough space
+    to render the maze.
+    If not, it will print a message with the maximum
+    allowed size and the current size."""
+    @wraps(func)
+    def wrapper(self: "MazeGenerator") -> None:
+        term_cols: int
+        term_lines: int
+        term_cols, term_lines = shutil.get_terminal_size()
+        maze_cols: int = len(self.maze_grid[0])
+        maze_lines: int = len(self.maze_grid)
+
+        if term_lines >= maze_lines and term_cols >= maze_cols:
+            func(self)
+        elif self.first_frame:
+            print(self.max_size())
+
+        return None
+
+    return wrapper
 
 
 class MazeGenerator:
@@ -91,7 +115,6 @@ class MazeGenerator:
     colour: str
     output: str
     seed: int
-    enough_space: bool
 
     class Moves(Enum):
         """Cardinal directions for maze movement."""
@@ -234,7 +257,7 @@ class MazeGenerator:
                     walls[i] = 1
 
             self.maze[coor] = walls
-            if self.show_animation and self.enough_space:
+            if self.show_animation:
                 self.animate()
 
         def remove_walls(coor: Coor, mov: MazeGenerator.Moves | None) -> None:
@@ -268,7 +291,7 @@ class MazeGenerator:
                 for mov in list(self.Moves):
                     if valid_move(celd, mov, [], True):
                         remove_walls(celd, mov)
-                        if self.show_animation and self.enough_space:
+                        if self.show_animation:
                             self.animate()
                         count += 1
                         break
@@ -417,6 +440,7 @@ class MazeGenerator:
             (self.exit_coor[1] * 2) + 1
         ][(self.exit_coor[0] * 4) + 2] = 'X'
 
+    @enough_space
     def show_hide_solution(self) -> None:
         """Toggle the visibility of the solution path in the ASCII render."""
         maze_grid: MazeGrid = self.maze_grid
@@ -484,30 +508,32 @@ class MazeGenerator:
                         self.print_maze(maze_grid, self.first_frame)
                         time.sleep(0.01)
 
-        if self.enough_space:
-            if self.solution_hidden:
-                self.solution_hidden = False
-                animation: bool = False
+        if self.solution_hidden:
+            self.solution_hidden = False
+            animation: bool = False
 
-                if self.show_animation:
-                    animation = True
-                    add_chars(self.maze, '◦', maze_grid, animation=animation)
-                    add_chars(self.shortest_sol[1], '○', maze_grid,
-                              animation=animation)
-                add_remove_arrows(self.shortest_sol[1], self.shortest_sol[0],
-                                  animation=animation)
-                add_chars(self.shortest_sol[1], '•', maze_grid,
+            if self.show_animation:
+                animation = True
+
+                add_chars(self.maze, '◦', maze_grid, animation=animation)
+                add_chars(self.shortest_sol[1], '○', maze_grid,
                           animation=animation)
-                add_chars(set(self.maze).difference(set(self.shortest_sol[1])),
-                          ' ', maze_grid)
-                if not self.show_animation:
-                    self.print_maze(maze_grid, self.first_frame)
-            else:
-                self.solution_hidden = True
-                add_chars(self.maze, ' ', maze_grid)
-                add_remove_arrows(self.shortest_sol[1],
-                                  self.shortest_sol[0], True)
+            add_remove_arrows(self.shortest_sol[1], self.shortest_sol[0],
+                              animation=animation)
+            add_chars(self.shortest_sol[1], '•', maze_grid,
+                      animation=animation)
+            add_chars(set(self.maze).difference(set(self.shortest_sol[1])),
+                      ' ', maze_grid)
+
+            if not self.show_animation:
                 self.print_maze(maze_grid, self.first_frame)
+
+        else:
+            self.solution_hidden = True
+            add_chars(self.maze, ' ', maze_grid)
+            add_remove_arrows(self.shortest_sol[1],
+                              self.shortest_sol[0], True)
+            self.print_maze(maze_grid, self.first_frame)
 
     def parse_vertices(self) -> None:
         """Parse maze cells into vertex characters for ASCII rendering."""
@@ -547,6 +573,7 @@ class MazeGenerator:
                                  if key in self.MAZE_CHARS else ' ')
         self.parsed_coor = parsed_coor
 
+    @enough_space
     def render_maze(self) -> None:
         """Render the full maze to the ASCII grid and print it."""
         maze_grid: MazeGrid = self.maze_grid
@@ -575,6 +602,7 @@ class MazeGenerator:
         self.print_maze(maze_grid, self.first_frame)
         self.first_frame = False
 
+    @enough_space
     def animate(self) -> None:
         """Animate the maze generation by updating the grid incrementally."""
         maze_grid: MazeGrid = self.maze_grid
@@ -627,6 +655,7 @@ class MazeGenerator:
         sys.stdout.flush()
         self.first_frame = False
 
+    @enough_space
     def change_walls_colour(self) -> None:
         """Cycle to the next wall colour and re-render the maze."""
         self.colour = next(self.colour_iter)
@@ -657,17 +686,6 @@ class MazeGenerator:
                    )
         self.output = result
 
-    def enough_space_print(self) -> bool:
-        """Check if the terminal has enough space to render the maze.
-
-        Returns:
-            True if the terminal is large enough, False otherwise.
-        """
-        term_cols, term_lines = shutil.get_terminal_size()
-        maze_cols: int = len(self.maze_grid[0])
-        maze_lines: int = len(self.maze_grid)
-        return term_lines >= maze_lines and term_cols >= maze_cols
-
     def max_size(self) -> str:
         """Generate a message indicating the max allowed maze size.
 
@@ -678,7 +696,8 @@ class MazeGenerator:
         max_width: int = (term_cols - 1) // 4
         max_height: int = ((term_lines - 1) // 2) - 1
         return (f"\nThe maze is too large to render in the terminal. "
-                f"Use the MLX library instead (press 4).\n"
+                f"Use the MLX library instead (press 4), "
+                f"or resize the window.\n\n"
                 f"Max allowed size: {max_width}x{max_height}\n"
                 f"Current size: {self.width}x{self.height}\n")
 
@@ -720,12 +739,8 @@ class MazeGenerator:
             self.add_42_pattern()
         random.seed(seed)
         self.create_grid()
-        self.enough_space = self.enough_space_print()
         self.maze_generation()
-        if self.enough_space:
-            self.render_maze()
-        else:
-            print(self.max_size())
+        self.render_maze()
         self.solve_maze(entry, exit_coor)
         self.shortest_solution()
         self.bitmask_output()
