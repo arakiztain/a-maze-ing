@@ -29,7 +29,6 @@ def enough_space(func: Callable[..., None]) -> Callable:
         if term_lines >= maze_lines and term_cols >= maze_cols:
             func(self)
         elif self.first_frame:
-            self.ascii_notice_printed = True
             print(self.max_size())
 
         return None
@@ -58,7 +57,6 @@ class MazeGenerator:
     colour: str
     output: str
     seed: int
-    ascii_notice_printed: bool
 
     class Moves(Enum):
         N = 'N'
@@ -582,7 +580,6 @@ class MazeGenerator:
         self.solution_hidden = True
         self.colour = ""
         self.first_frame: bool = True
-        self.ascii_notice_printed = False
 
         if self.width >= 8 and self.height >= 6:
             self.add_42_pattern()
