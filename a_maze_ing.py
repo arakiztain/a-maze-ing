@@ -80,6 +80,11 @@ def main() -> None:
         r: MazeConfig = parse_config(sys.argv[1])
         user_set_seed: bool = r.user_set_seed
         maze_gen: MazeGenerator = MazeGenerator()
+        maze_gen.no_print_space_msg = ("\nThe maze is too large "
+                                       "to render in the terminal. "
+                                       "Use the MLX library "
+                                       "instead (press 4), "
+                                       "or resize the window.\n\n")
         assert r.seed is not None
         maze_gen.generate(
             width=r.width,

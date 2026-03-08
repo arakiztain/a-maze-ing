@@ -33,7 +33,8 @@ def enough_space(func: Callable[..., None]) -> Callable:
         if term_lines >= maze_lines and term_cols >= maze_cols:
             func(self)
         elif self.first_frame:
-            print(self.max_size())
+            self.max_size()
+            self.print_no_space()
 
         return None
 
@@ -115,6 +116,10 @@ class MazeGenerator:
     colour: str
     output: str
     seed: int
+    no_print_msg: str = ("\nThe maze is too large to render "
+                         "in the terminal. "
+                         "Try resizing the window.\n")
+    max_size_print: tuple[int, int]
 
     class Moves(Enum):
         """Cardinal directions for maze movement."""
@@ -686,20 +691,24 @@ class MazeGenerator:
                    )
         self.output = result
 
-    def max_size(self) -> str:
-        """Generate a message indicating the max allowed maze size.
-
-        Returns:
-            A formatted string with size information.
-        """
+    def max_size(self) -> None:
+        """Generate a message indicating the max allowed maze size."""
         term_cols, term_lines = shutil.get_terminal_size()
         max_width: int = (term_cols - 1) // 4
         max_height: int = ((term_lines - 1) // 2) - 1
-        return (f"\nThe maze is too large to render in the terminal. "
-                f"Use the MLX library instead (press 4), "
-                f"or resize the window.\n\n"
-                f"Max allowed size: {max_width}x{max_height}\n"
-                f"Current size: {self.width}x{self.height}\n")
+        self.max_size_print = (max_width, max_height)
+
+    def print_no_space(self) -> None:
+        """Print a message indicating that the maze cannot
+        be rendered due to size constraints."""
+        max_width, max_height = self.max_size_print
+
+        print(self.no_print_msg,
+              f"Max allowed size: "
+              f"{max_width}x{max_height}\n"
+              f"Current size: "
+              f"{self.width}x{self.height}\n",
+              sep='\n')
 
     def generate(self, width: int, height: int, unique_sol: bool, seed: int,
                  entry: Coor, exit_coor: Coor, output_file: str,
