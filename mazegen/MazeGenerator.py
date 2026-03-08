@@ -7,6 +7,7 @@ import time
 from itertools import cycle
 import shutil
 from functools import wraps
+from mazegen.maze_config import MazeConfig
 
 Coor: TypeAlias = tuple[int, int]
 Solution: TypeAlias = tuple[
@@ -115,6 +116,7 @@ class MazeGenerator:
     colour: str
     output: str
     seed: int
+    output_filename: str
 
     class Moves(Enum):
         """Cardinal directions for maze movement."""
@@ -701,8 +703,32 @@ class MazeGenerator:
                 f"Max allowed size: {max_width}x{max_height}\n"
                 f"Current size: {self.width}x{self.height}\n")
 
-    def generate(self, width: int, height: int, unique_sol: bool, seed: int,
-                 entry: Coor, exit_coor: Coor, output_file: str,
+    def _validate_state(self) -> None:
+        """Validate the initial state of the maze generator."""
+        config = MazeConfig(
+            width=self.width,
+            height=self.height,
+            entry=self.entry,
+            exit=self.exit_coor,
+            output_file=self.output_filename,
+            perfect=self.unique_sol,
+            animation=self.show_animation,
+            seed=self.seed,
+            user_set_seed=False
+        )
+
+        self.width = config.width
+        self.height = config.height
+        self.entry = config.entry
+        self.exit_coor = config.exit
+        self.output_filename = config.output_file
+        self.unique_sol = config.perfect
+        self.animation = config.animation
+        self.seed = config.seed
+
+    def generate(self, width: int, height: int, unique_sol: bool,
+                 seed: int | None, entry: Coor, exit_coor: Coor,
+                 output_file: str,
                  show_animation: bool = False) -> None:
         """Generate a maze with the given parameters.
 
@@ -716,6 +742,9 @@ class MazeGenerator:
             output_file: Path to write the maze output file.
             show_animation: If True, animate the generation process.
         """
+        if seed is None:
+            seed = random.randint(0, 999999)
+
         sys.setrecursionlimit(width * height * 10)
         self.entry = entry
         self.exit_coor = exit_coor
@@ -734,15 +763,23 @@ class MazeGenerator:
         self.solution_hidden = True
         self.colour = ""
         self.first_frame = True
+        self.output_filename = output_file
+
+        self._validate_state()
 
         if self.width >= 8 and self.height >= 6:
             self.add_42_pattern()
-        random.seed(seed)
+        random.seed(self.seed)
         self.create_grid()
         self.maze_generation()
         self.render_maze()
-        self.solve_maze(entry, exit_coor)
+        self.solve_maze(self.entry, self.exit_coor)
         self.shortest_solution()
         self.bitmask_output()
-        with open(output_file, "w") as f:
-            f.write(self.output)
+        try:
+            with open(self.output_filename, "w") as f:
+                f.write(self.output)
+        except OSError as e:
+            print(f"Cannot write output file '{self.output_filename}': {e}")
+        except Exception as e:
+            print(f"Error: {e}")
