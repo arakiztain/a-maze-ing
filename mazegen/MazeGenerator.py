@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterator, TypeAlias, Iterable, Callable
+from typing import Iterator, TypeAlias, Callable
 from enum import Enum
 import random
 import sys
@@ -17,7 +17,7 @@ MazeGrid: TypeAlias = list[list[str]]
 Maze: TypeAlias = dict[Coor, list[int]]
 
 
-def enough_space(func: Callable[..., None]) -> Callable:
+def enough_space(func: Callable[..., None]) -> Callable[..., None]:
     """Decorator to check if the terminal has enough space
     to render the maze.
     If not, it will print a message with the maximum
@@ -133,7 +133,7 @@ class MazeGenerator:
         "\033[96m",
     )
     RESET: str = "\033[0m"
-    colour_iter: Iterator = cycle(COLOURS)
+    colour_iter: Iterator[str] = cycle(COLOURS)
 
     MAZE_CHARS: dict[tuple[int, int, int, int], str] = {
         (0, 0, 0, 0): ' ',
@@ -170,7 +170,7 @@ class MazeGenerator:
         x, y = coordinates
         return x + dx, y + dy
 
-    def _valid_move(self, coordinates: tuple, move: Moves) -> bool:
+    def _valid_move(self, coordinates: Coor, move: Moves) -> bool:
         """Check if a move is valid (no wall blocking).
 
         Args:
@@ -203,7 +203,8 @@ class MazeGenerator:
             path: Tuple of coordinates visited so far.
         """
         if curr_coor == exit_coor:
-            if movs[:-1] not in self.solutions:
+            if (movs[:-1], path) not in self.solutions:
+                print("sol")
                 self.solutions.add((movs[:-1], path))
             return
         if move is not None:
@@ -298,7 +299,7 @@ class MazeGenerator:
                 if count == 2:
                     break
 
-        def valid_celd(coor: tuple) -> bool:
+        def valid_celd(coor: Coor) -> bool:
             """Check if coordinates are within maze bounds.
 
             Args:
@@ -313,7 +314,7 @@ class MazeGenerator:
                 )
 
         def valid_move(curr: Coor, mov: MazeGenerator.Moves,
-                       path: list, alt_path: bool = False) -> bool:
+                       path: list[Coor], alt_path: bool = False) -> bool:
             """Check if a move is valid during generation.
 
             Args:
@@ -445,7 +446,8 @@ class MazeGenerator:
         """Toggle the visibility of the solution path in the ASCII render."""
         maze_grid: MazeGrid = self.maze_grid
 
-        def add_remove_arrows(path: tuple, movs: tuple,
+        def add_remove_arrows(path: tuple[Coor, ...],
+                              movs: tuple[MazeGenerator.Moves, ...],
                               remove: bool = False,
                               animation: bool = False) -> None:
             """Add or remove direction arrows along the solution path.
@@ -490,7 +492,8 @@ class MazeGenerator:
             """
             maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
 
-        def add_chars(coords: Iterable, char: str, maze_grid: MazeGrid,
+        def add_chars(coords: Maze | tuple[Coor, ...] | set[Coor],
+                      char: str, maze_grid: MazeGrid,
                       animation: bool = False) -> None:
             """Place a character at multiple cell positions.
 
@@ -640,7 +643,7 @@ class MazeGenerator:
             if self.first_frame:
                 self.first_frame = False
 
-    def _print_maze(self, maze: list, first_frame: bool) -> None:
+    def _print_maze(self, maze: MazeGrid, first_frame: bool) -> None:
         """Print the maze grid to stdout, overwriting the previous frame.
 
         Args:
@@ -715,7 +718,6 @@ class MazeGenerator:
             output_file: Path to write the maze output file.
             show_animation: If True, animate the generation process.
         """
-        sys.setrecursionlimit(width * height * 10)
         self.entry = entry
         self.exit_coor = exit_coor
         self.width = width
@@ -736,6 +738,7 @@ class MazeGenerator:
 
         if self.width >= 8 and self.height >= 6:
             self._add_42_pattern()
+        sys.setrecursionlimit(self.width * self.height * 10)
         random.seed(seed)
         self._create_grid()
         self._maze_generation()

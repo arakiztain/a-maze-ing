@@ -154,7 +154,7 @@ def parse_config(path: str) -> MazeConfig:
         key, value = line.split("=", 1)
         key = key.strip().upper()
         value = value.strip()
-        user_set_seed = False
+        user_set_seed: bool = False
 
         if key == "SEED":
             user_set_seed = True
