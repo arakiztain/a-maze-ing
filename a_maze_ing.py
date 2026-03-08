@@ -2,6 +2,7 @@ import sys
 from maze.config_parser import parse_config, MazeConfig
 from mazegen.MazeGenerator import MazeGenerator
 import os
+import random
 
 
 def cli_loop(
@@ -37,16 +38,23 @@ def cli_loop(
             case "1":
                 config = parse_config(config_path)
                 maze_gen = MazeGenerator()
-                assert config.seed is not None
+
+                if not config.user_set_seed:
+                    seed = random.randint(0, 999999)
+                    user_set_seed = False
+                else:
+                    seed = config.seed
+                    user_set_seed = True
+
                 maze_gen.generate(
                     width=config.width,
                     height=config.height,
                     unique_sol=config.perfect,
-                    seed=config.seed,
+                    seed=seed,
                     entry=config.entry,
                     exit_coor=config.exit,
                     output_file=config.output_file,
-                    show_animation=config.animation or False
+                    show_animation=config.animation
                 )
             case "2":
                 maze_gen.first_frame = True
@@ -60,6 +68,7 @@ def cli_loop(
                 input("\nPress enter to return to menu...")
             case "5":
                 print("Bye!")
+
                 sys.exit(0)
             case _:
                 print("Invalid option.\n")
@@ -89,7 +98,7 @@ def main() -> None:
             entry=r.entry,
             exit_coor=r.exit,
             output_file=r.output_file,
-            show_animation=r.animation or False
+            show_animation=r.animation
         )
 
         cli_loop(maze_gen, r, sys.argv[1], user_set_seed)
