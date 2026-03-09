@@ -142,6 +142,17 @@ class MazeGenerator:
     RESET: str = "\033[0m"
     colour_iter: Iterator[str] = cycle(COLOURS)
 
+    PATTERN_COLOURS: tuple[str, ...] = (
+        "\033[101m",
+        "\033[102m",
+        "\033[103m",
+        "\033[104m",
+        "\033[105m",
+        "\033[106m"
+    )
+
+    pattern_colour_iter: Iterator[str] = cycle(PATTERN_COLOURS)
+
     MAZE_CHARS: dict[tuple[int, int, int, int], str] = {
         (0, 0, 0, 0): ' ',
         (0, 0, 1, 1): '┐',
@@ -211,9 +222,9 @@ class MazeGenerator:
         """
         if curr_coor == exit_coor:
             if (movs[:-1], path) not in self.solutions:
-                print("sol")
                 self.solutions.add((movs[:-1], path))
             return
+
         if move is not None:
             if not self._valid_move(curr_coor, move):
                 return
@@ -448,6 +459,35 @@ class MazeGenerator:
             (self.exit_coor[1] * 2) + 1
         ][(self.exit_coor[0] * 4) + 2] = 'X'
 
+    def _add_char(self, char: str, coor: Coor, maze_grid: MazeGrid) -> None:
+        """Place a character at a cell position in the grid.
+
+        Args:
+            char: Character to place.
+            coor: Cell coordinates.
+            maze_grid: The grid to modify.
+        """
+        maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
+
+    def _add_chars(self, coords: Maze | tuple[Coor, ...] | set[Coor],
+                   char: str, maze_grid: MazeGrid,
+                   animation: bool = False) -> None:
+        """Place a character at multiple cell positions.
+
+        Args:
+            coords: Iterable of cell coordinates.
+            char: Character to place.
+            maze_grid: The grid to modify.
+            animation: If True, animate step by step.
+        """
+        for coor in coords:
+            if (coor != self.entry and coor != self.exit_coor
+                    and coor not in self.isolated):
+                self._add_char(char, coor, maze_grid)
+                if animation:
+                    self._print_maze(maze_grid, self.first_frame)
+                    time.sleep(0.01)
+
     @enough_space
     def show_hide_solution(self) -> None:
         """Toggle the visibility of the solution path in the ASCII render."""
@@ -489,35 +529,6 @@ class MazeGenerator:
                     self._print_maze(maze_grid, self.first_frame)
                     time.sleep(0.01)
 
-        def add_char(char: str, coor: Coor, maze_grid: MazeGrid) -> None:
-            """Place a character at a cell position in the grid.
-
-            Args:
-                char: Character to place.
-                coor: Cell coordinates.
-                maze_grid: The grid to modify.
-            """
-            maze_grid[(coor[1] * 2) + 1][(coor[0] * 4) + 2] = char
-
-        def add_chars(coords: Maze | tuple[Coor, ...] | set[Coor],
-                      char: str, maze_grid: MazeGrid,
-                      animation: bool = False) -> None:
-            """Place a character at multiple cell positions.
-
-            Args:
-                coords: Iterable of cell coordinates.
-                char: Character to place.
-                maze_grid: The grid to modify.
-                animation: If True, animate step by step.
-            """
-            for coor in coords:
-                if (coor != self.entry and coor != self.exit_coor
-                        and coor not in self.isolated):
-                    add_char(char, coor, maze_grid)
-                    if animation:
-                        self._print_maze(maze_grid, self.first_frame)
-                        time.sleep(0.01)
-
         if self.solution_hidden:
             self.solution_hidden = False
             animation: bool = False
@@ -525,21 +536,22 @@ class MazeGenerator:
             if self.show_animation:
                 animation = True
 
-                add_chars(self.maze, '◦', maze_grid, animation=animation)
-                add_chars(self.shortest_sol[1], '○', maze_grid,
-                          animation=animation)
+                self._add_chars(self.maze, '◦', maze_grid, animation=animation)
+                self._add_chars(self.shortest_sol[1], '○', maze_grid,
+                                animation=animation)
             add_remove_arrows(self.shortest_sol[1], self.shortest_sol[0],
                               animation=animation)
-            add_chars(self.shortest_sol[1], '•', maze_grid,
-                      animation=animation)
-            add_chars(set(self.maze).difference(set(self.shortest_sol[1])),
-                      ' ', maze_grid)
+            self._add_chars(self.shortest_sol[1], '•', maze_grid,
+                            animation=animation)
+            self._add_chars(set(self.maze)
+                            .difference(set(self.shortest_sol[1])),
+                            ' ', maze_grid)
 
             self._print_maze(maze_grid, self.first_frame)
 
         else:
             self.solution_hidden = True
-            add_chars(self.maze, ' ', maze_grid)
+            self._add_chars(self.maze, ' ', maze_grid)
             add_remove_arrows(self.shortest_sol[1],
                               self.shortest_sol[0], True)
             self._print_maze(maze_grid, self.first_frame)
@@ -605,9 +617,7 @@ class MazeGenerator:
                             )
                 if self.maze[x, y][3] == 1:
                     maze_grid[y_ + 1][x_] = self.colour + '│' + self.RESET
-        for coor in self.isolated:
-            x, y = coor
-            self.maze_grid[(y * 2) + 1][(x * 4) + 2] = "\033[45m \033[0m"
+
         self._print_maze(maze_grid, self.first_frame)
         self.first_frame = False
 
@@ -670,6 +680,16 @@ class MazeGenerator:
         self.colour = next(self.colour_iter)
         self._parse_vertices()
         self._render_maze()
+
+    @enough_space
+    def change_pattern_colour(self) -> None:
+        """Cycle to the next pattern colour and re-render the maze."""
+        colour: str = next(self.pattern_colour_iter)
+        char: str = colour + ' ' + "\033[0m"
+        maze_grid: MazeGrid = self.maze_grid
+        for coor in self.isolated:
+            self._add_char(char, coor, maze_grid)
+        self._print_maze(maze_grid, self.first_frame)
 
     def bitmask_output(self) -> None:
         """Generate the bitmask string output for the maze file."""
@@ -784,6 +804,7 @@ class MazeGenerator:
         self.solve_maze(entry, exit_coor)
         self._shortest_solution()
         self.bitmask_output()
+
         try:
             with open(self.output_filename, "w") as f:
                 f.write(self.output)
