@@ -1,5 +1,6 @@
 import sys
-from maze.config_parser import parse_config, MazeConfig
+from maze.config_parser import parse_config
+from mazegen.maze_config import MazeConfig
 from mazegen.MazeGenerator import MazeGenerator
 import random
 import subprocess
