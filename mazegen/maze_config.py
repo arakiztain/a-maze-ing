@@ -113,7 +113,5 @@ class MazeConfig:
 
         if self.seed is None:
             self.seed = random.randint(0, 999999)
-        else:
-            self.user_set_seed = True
 
         return self

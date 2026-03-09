@@ -33,14 +33,18 @@ def load_maze(path: str) -> tuple[
     """
     with open(path) as f:
         lines = [line.strip() for line in f if line.strip()]
-    path_line = lines[-2]
-    exit_line = lines[-3]
-    entry_line = lines[-4]
-    maze_lines = lines[:-4]
-    maze = [[int(c, 16) for c in row] for row in maze_lines]
-    entry = tuple(map(int, entry_line.split(',')))
-    exit_ = tuple(map(int, exit_line.split(',')))
-    solution_path: list[str] = list(path_line.strip())
+    try:
+        path_line = lines[-1]
+        exit_line = lines[-2]
+        entry_line = lines[-3]
+        maze_lines = lines[:-3]
+        maze = [[int(c, 16) for c in row] for row in maze_lines]
+        entry = tuple(map(int, entry_line.split(',')))
+        exit_ = tuple(map(int, exit_line.split(',')))
+        solution_path: list[str] = list(path_line.strip())
+    except (ValueError, IndexError) as e:
+        raise ValueError(f"Invalid maze.txt format: {e}")
+
     return maze, entry, exit_, solution_path  # type: ignore
 
 
@@ -227,7 +231,7 @@ def main() -> None:
         os._exit(0)
 
     mlx.mlx_key_hook(win, key_hook, None)
-    mlx.mlx_hook(win, 17, 0, close_hook, None)
+    mlx.mlx_hook(win, 33, 0, close_hook, None)
     mlx.mlx_loop_hook(mlx_ptr, loop_hook, None)
     mlx.mlx_loop(mlx_ptr)
 

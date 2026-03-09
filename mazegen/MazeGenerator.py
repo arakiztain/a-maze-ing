@@ -211,7 +211,6 @@ class MazeGenerator:
         """
         if curr_coor == exit_coor:
             if (movs[:-1], path) not in self.solutions:
-                print("sol")
                 self.solutions.add((movs[:-1], path))
             return
         if move is not None:
