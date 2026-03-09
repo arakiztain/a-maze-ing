@@ -1,8 +1,10 @@
 import sys
 from maze.config_parser import parse_config, MazeConfig
 from mazegen.MazeGenerator import MazeGenerator
-import os
 import random
+import subprocess
+
+mlx_proc: list[subprocess.Popen] = [None]
 
 
 def cli_loop(
@@ -67,10 +69,15 @@ def cli_loop(
                 maze_gen.first_frame = True
                 maze_gen.change_pattern_colour()
             case "5":
-                os.system("python3 maze/render_mazeMLX.py &")
+                # os.system("python3 maze/render_mazeMLX.py &")
+                mlx_proc[0] = subprocess.Popen(
+                    ["python3", "maze/render_mazeMLX.py"]
+                )
                 print("\n Generating maze with mlx...")
                 input("\nPress enter to return to menu...")
             case "6":
+                if mlx_proc[0]:
+                     mlx_proc[0].terminate()
                 print("Bye!")
 
                 sys.exit(0)
