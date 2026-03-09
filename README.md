@@ -1,7 +1,18 @@
 *This project has been created as part of the 42 curriculum by garakizt, imunoz-a.*
 
 # A-Maze-ing
-
+```
+   ░███            ░███     ░███                                          ░██                      
+  ░██░██           ░████   ░████                                                                   
+ ░██  ░██          ░██░██ ░██░██  ░██████   ░█████████  ░███████          ░██░████████   ░████████ 
+░█████████ ░██████ ░██ ░████ ░██       ░██       ░███  ░██    ░██ ░██████ ░██░██    ░██ ░██    ░██ 
+░██    ░██         ░██  ░██  ░██  ░███████     ░███    ░█████████         ░██░██    ░██ ░██    ░██ 
+░██    ░██         ░██       ░██ ░██   ░██   ░███      ░██                ░██░██    ░██ ░██   ░███ 
+░██    ░██         ░██       ░██  ░█████░██ ░█████████  ░███████          ░██░██    ░██  ░█████░██ 
+                                                                                               ░██ 
+                                                                                         ░███████  
+                                                                                                   
+```
 ## Description
 
 A-Maze-ing is a Python project that generates, solves and visually renders random mazes. The goal is to produce valid, reproducible mazes from a configuration file, export them in a bitmask format, and display them either in the terminal via ASCII rendering or graphically using the MiniLibX (MLX) library.
