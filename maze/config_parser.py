@@ -58,10 +58,10 @@ class MazeConfig:
     entry: Tuple[int, int] = Field(...)
     exit: Tuple[int, int] = Field(...)
     output_file: str = Field(...)
-    perfect: bool = Field(default=True)
-    animation: bool | None = Field(default=False)
-    seed: int | None = Field(default=None)
-    user_set_seed: bool = Field(default=False)
+    perfect: bool = Field(False)
+    animation: bool = Field(False)
+    seed: int = Field(random.randint(0, 999999))
+    user_set_seed: bool = Field(...)
 
     @model_validator(mode="after")
     def entry_validator(self) -> "MazeConfig":
@@ -112,11 +112,6 @@ class MazeConfig:
         if errors:
             raise ConfigError("; ".join(errors))
 
-        if self.seed is None:
-            self.seed = random.randint(0, 999999)
-        else:
-            self.user_set_seed = True
-
         return self
 
 
@@ -159,21 +154,13 @@ def parse_config(path: str) -> MazeConfig:
         key, value = line.split("=", 1)
         key = key.strip().upper()
         value = value.strip()
+        user_set_seed: bool = False
 
-        if key in ["WIDTH", "HEIGHT"]:
-            config_dict[key.lower()] = int(value)
-        elif key in ["ENTRY", "EXIT"]:
-            config_dict[key.lower()] = tuple(map(int, value.split(",")))
-        elif key == "PERFECT":
-            config_dict[key.lower()] = value.lower() == "true"
-        elif key == "ANIMATION":
-            config_dict[key.lower()] = value.lower() == "true"
-        elif key == "SEED":
-            config_dict[key.lower()] = (
-                int(value) if value.strip() and
-                value.lower() != "none" else None
-            )
+        if key == "SEED":
+            user_set_seed = True
+        if key in {"ENTRY", "EXIT"}:
+            config_dict[key.lower()] = value.split(",")
         else:
             config_dict[key.lower()] = value
 
-    return MazeConfig(**config_dict)
+    return MazeConfig(**config_dict, user_set_seed=user_set_seed)
