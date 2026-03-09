@@ -57,10 +57,10 @@ class MazeConfig:
     entry: tuple[int, int] = Field(...)
     exit: tuple[int, int] = Field(...)
     output_file: str = Field(...)
-    perfect: bool = Field(default=True)
-    animation: bool | None = Field(default=False)
-    seed: int | None = Field(default=None)
-    user_set_seed: bool = Field(default=False)
+    perfect: bool = Field(False)
+    animation: bool = Field(False)
+    seed: int = Field(random.randint(0, 999999))
+    user_set_seed: bool = Field(False)
 
     @model_validator(mode="after")
     def entry_validator(self) -> "MazeConfig":
@@ -110,8 +110,5 @@ class MazeConfig:
 
         if errors:
             raise ConfigError("; ".join(errors))
-
-        if self.seed is None:
-            self.seed = random.randint(0, 999999)
 
         return self
