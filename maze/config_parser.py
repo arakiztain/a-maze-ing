@@ -35,19 +35,19 @@ def parse_config(path: str) -> MazeConfig:
         return None  # type: ignore
 
     config_dict: dict[str, Any] = {}
+    user_set_seed: bool = False
     for line in data:
         if not line.strip() or line.startswith("#"):
             continue
         key, value = line.split("=", 1)
         key = key.strip().upper()
         value = value.strip()
-        user_set_seed: bool = False
 
-        if key == "SEED":
+        if key == "SEED" and value and value.lower() != "none":
             user_set_seed = True
         if key in {"ENTRY", "EXIT"}:
             config_dict[key.lower()] = value.split(",")
-        else:
+        elif value:
             config_dict[key.lower()] = value
 
     return MazeConfig(**config_dict, user_set_seed=user_set_seed)
