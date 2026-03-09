@@ -217,3 +217,7 @@ mlx_CLXV/src/*.o
 mlx_CLXV/*.whl
 mlx_CLXV/test/mlxtest
 mlx_CLXV/test/mlxspeed
+mlx_CLXV/python/dist/
+mlx_CLXV/python/src/mlx.egg-info/
+mlx_CLXV/build/
+mlx_CLXV/python/build/
