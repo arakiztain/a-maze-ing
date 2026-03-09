@@ -7,6 +7,7 @@ import time
 from itertools import cycle
 import shutil
 from functools import wraps
+from mazegen.maze_config import MazeConfig
 
 Coor: TypeAlias = tuple[int, int]
 Solution: TypeAlias = tuple[
@@ -116,6 +117,7 @@ class MazeGenerator:
     colour: str
     output: str
     seed: int
+    output_filename: str
     no_print_msg: str = ("\nThe maze is too large to render "
                          "in the terminal. "
                          "Try resizing the window.\n")
@@ -712,8 +714,32 @@ class MazeGenerator:
               f"{self.width}x{self.height}\n",
               sep='\n')
 
-    def generate(self, width: int, height: int, unique_sol: bool, seed: int,
-                 entry: Coor, exit_coor: Coor, output_file: str,
+    def _validate_state(self) -> None:
+        """Validate the initial state of the maze generator."""
+        config = MazeConfig(
+            width=self.width,
+            height=self.height,
+            entry=self.entry,
+            exit=self.exit_coor,
+            output_file=self.output_filename,
+            perfect=self.unique_sol,
+            animation=self.show_animation,
+            seed=self.seed,
+            user_set_seed=False
+        )
+
+        self.width = config.width
+        self.height = config.height
+        self.entry = config.entry
+        self.exit_coor = config.exit
+        self.output_filename = config.output_file
+        self.unique_sol = config.perfect
+        self.animation = config.animation
+        self.seed = config.seed
+
+    def generate(self, width: int, height: int, unique_sol: bool,
+                 seed: int | None, entry: Coor, exit_coor: Coor,
+                 output_file: str,
                  show_animation: bool = False) -> None:
         """Generate a maze with the given parameters.
 
@@ -744,6 +770,9 @@ class MazeGenerator:
         self.solution_hidden = True
         self.colour = ""
         self.first_frame = True
+        self.output_filename = output_file
+
+        self._validate_state()
 
         if self.width >= 8 and self.height >= 6:
             self._add_42_pattern()
@@ -755,5 +784,10 @@ class MazeGenerator:
         self.solve_maze(entry, exit_coor)
         self._shortest_solution()
         self.bitmask_output()
-        with open(output_file, "w") as f:
-            f.write(self.output)
+        try:
+            with open(self.output_filename, "w") as f:
+                f.write(self.output)
+        except OSError as e:
+            print(f"Cannot write output file '{self.output_filename}': {e}")
+        except Exception as e:
+            print(f"Error: {e}")
