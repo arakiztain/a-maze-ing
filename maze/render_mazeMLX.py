@@ -2,6 +2,7 @@ from mlx import Mlx
 import time
 import os
 from typing import Any
+import sys
 
 CELL: int = 40
 WALL_COLOR: int = 0x000000
@@ -158,7 +159,8 @@ def main() -> None:
     path step by step using the loop hook. Pressing ESC or closing the window
     exits the program.
     """
-    maze, entry, exit_, path = load_maze("maze.txt")
+    maze_file = sys.argv[1] if len(sys.argv) > 1 else "maze.txt"
+    maze, entry, exit_, path = load_maze(maze_file)
     rows: int = len(maze)
     cols: int = len(maze[0])
     coords: list[tuple[int, int]] = path_to_coords(entry, path)

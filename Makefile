@@ -3,6 +3,7 @@ PYTHON := python3
 CONFIG ?= config/config.txt
 
 install:
+	cp config/config_example.txt config/config.txt
 	cd mlx_CLXV && make
 	cd mlx_CLXV && bash pybuild.sh
 	$(PYTHON) -m pip install mlx_CLXV/python/dist/mlx-2.2-py3-none-any.whl

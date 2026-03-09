@@ -5,7 +5,7 @@ from mazegen.MazeGenerator import MazeGenerator
 import random
 import subprocess
 
-mlx_proc: list[subprocess.Popen] = [None]
+mlx_proc: list[subprocess.Popen[bytes] | None] = [None]
 
 
 def cli_loop(
@@ -72,13 +72,13 @@ def cli_loop(
             case "5":
                 # os.system("python3 maze/render_mazeMLX.py &")
                 mlx_proc[0] = subprocess.Popen(
-                    ["python3", "maze/render_mazeMLX.py"]
+                    ["python3", "maze/render_mazeMLX.py", config.output_file]
                 )
                 print("\n Generating maze with mlx...")
                 input("\nPress enter to return to menu...")
             case "6":
                 if mlx_proc[0]:
-                     mlx_proc[0].terminate()
+                    mlx_proc[0].terminate()
                 print("Bye!")
 
                 sys.exit(0)
@@ -91,6 +91,12 @@ def main() -> None:
 
     Parses the config file, generates the maze and starts the CLI loop.
     """
+    print()
+    try:
+        with open("header.txt") as f:
+            print(f.read())
+    except FileNotFoundError:
+        pass
     err_message: str = "No config txt file provided"
     try:
         if (len(sys.argv) != 2 or
