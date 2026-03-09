@@ -91,6 +91,9 @@ def main() -> None:
 
     Parses the config file, generates the maze and starts the CLI loop.
     """
+    print()
+    with open("header.txt") as h:
+        print(h.read())
     err_message: str = "No config txt file provided"
     try:
         if (len(sys.argv) != 2 or
