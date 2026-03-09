@@ -737,7 +737,7 @@ class MazeGenerator:
         self.seed = config.seed
 
     def generate(self, width: int, height: int, unique_sol: bool,
-                 seed: int | None, entry: Coor, exit_coor: Coor,
+                 seed: int, entry: Coor, exit_coor: Coor,
                  output_file: str,
                  show_animation: bool = False) -> None:
         """Generate a maze with the given parameters.
@@ -758,7 +758,6 @@ class MazeGenerator:
         self.height = height
         self.unique_sol = unique_sol
         self.seed = seed
-        self.path = [entry]
         self.show_animation = show_animation
         self.no_exit = []
         self.solution_path = ()
@@ -773,6 +772,7 @@ class MazeGenerator:
 
         self._validate_state()
 
+        self.path = [self.entry]
         if self.width >= 8 and self.height >= 6:
             self._add_42_pattern()
         sys.setrecursionlimit(self.width * self.height * 10)
@@ -780,7 +780,7 @@ class MazeGenerator:
         self._create_grid()
         self._maze_generation()
         self._render_maze()
-        self.solve_maze(entry, exit_coor)
+        self.solve_maze(self.entry, self.exit_coor)
         self._shortest_solution()
         self.bitmask_output()
         try:
