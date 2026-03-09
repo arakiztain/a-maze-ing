@@ -29,10 +29,11 @@ def cli_loop(
         print(f"1. Re-generate a new maze {seed_status}")
         print("2. Show/hide path from entry to exit")
         print("3. Rotate maze colors")
-        print("4. Run mlx display")
-        print("5. Exit")
+        print("4. Rotate pattern colors")
+        print("5. Run mlx display")
+        print("6. Exit")
 
-        choice: str = input("Choice? (1-5): ").strip()
+        choice: str = input("Choice? (1-6): ").strip()
 
         match choice:
             case "1":
@@ -63,10 +64,13 @@ def cli_loop(
                 maze_gen.first_frame = True
                 maze_gen.change_walls_colour()
             case "4":
+                maze_gen.first_frame = True
+                maze_gen.change_pattern_colour()
+            case "5":
                 os.system("python3 maze/render_mazeMLX.py &")
                 print("\n Generating maze with mlx...")
                 input("\nPress enter to return to menu...")
-            case "5":
+            case "6":
                 print("Bye!")
 
                 sys.exit(0)
