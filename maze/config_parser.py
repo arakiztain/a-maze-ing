@@ -41,21 +41,13 @@ def parse_config(path: str) -> MazeConfig:
         key, value = line.split("=", 1)
         key = key.strip().upper()
         value = value.strip()
+        user_set_seed: bool = False
 
-        if key in ["WIDTH", "HEIGHT"]:
-            config_dict[key.lower()] = int(value)
-        elif key in ["ENTRY", "EXIT"]:
-            config_dict[key.lower()] = tuple(map(int, value.split(",")))
-        elif key == "PERFECT":
-            config_dict[key.lower()] = value.lower() == "true"
-        elif key == "ANIMATION":
-            config_dict[key.lower()] = value.lower() == "true"
-        elif key == "SEED":
-            config_dict[key.lower()] = (
-                int(value) if value.strip() and
-                value.lower() != "none" else None
-            )
+        if key == "SEED":
+            user_set_seed = True
+        if key in {"ENTRY", "EXIT"}:
+            config_dict[key.lower()] = value.split(",")
         else:
             config_dict[key.lower()] = value
 
-    return MazeConfig(**config_dict)
+    return MazeConfig(**config_dict, user_set_seed=user_set_seed)
