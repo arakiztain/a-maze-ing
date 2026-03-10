@@ -65,13 +65,15 @@ class MazeGenerator:
             exit_coor: Exit point coordinates as (x, y).
             width: Width of the maze in cells.
             height: Height of the maze in cells.
-            unique_sol: If True, alternative paths are created (imperfect maze).
+            unique_sol: If True, alternative paths
+            are created (imperfect maze).
             path: List of coordinates visited during generation.
             no_exit: List of dead-end coordinates reached during generation.
             solution_path: Tuple of coordinates forming the first found
             solution.
             maze: Dictionary mapping (x, y) coordinates to wall state lists.
-            solutions: Set of all solutions found, each as (moves, path) tuples.
+            solutions: Set of all solutions found,
+            each as (moves, path) tuples.
             isolated: List of coordinates belonging to the '42' pattern.
             shortest_sol: The shortest solution as a (moves, path) tuple.
             maze_grid: 2D character grid used for ASCII rendering.
