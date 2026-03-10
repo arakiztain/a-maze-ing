@@ -71,14 +71,21 @@ def cli_loop(
                 maze_gen.change_pattern_colour()
             case "5":
                 # os.system("python3 maze/render_mazeMLX.py &")
-                mlx_proc[0] = subprocess.Popen(
-                    ["python3", "maze/render_mazeMLX.py", config.output_file]
-                )
+                if not mlx_proc[0]:
+                    mlx_proc[0] = subprocess.Popen(
+                        ["python3", "maze/render_mazeMLX.py",
+                         config.output_file]
+
+                    )
                 print("\n Generating maze with mlx...")
                 input("\nPress enter to return to menu...")
+                if mlx_proc[0]:
+                    mlx_proc[0].terminate()
+                    mlx_proc[0] = None
             case "6":
                 if mlx_proc[0]:
                     mlx_proc[0].terminate()
+                    mlx_proc[0] = None
                 print("Bye!")
 
                 sys.exit(0)
