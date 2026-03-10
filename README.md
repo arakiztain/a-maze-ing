@@ -184,7 +184,7 @@ pip install dist/mazegen-1.0.0-py3-none-any.whl
 ### Basic usage example
 
 ```python
-from mazegen.MazeGenerator import MazeGenerator
+from mazegen.maze_generator import MazeGenerator
 
 maze = MazeGenerator()
 maze.generate(
@@ -306,4 +306,5 @@ The main deviation from the initial plan was the significant time spent debuggin
 - **Git / GitHub** — version control and pull request workflow
 - **Claude (Anthropic)** — AI assistant for debugging, documentation and MLX guidance
 - **mypy + flake8** — static analysis and code style enforcement
+
 - **Pydantic** — runtime config validation
