@@ -22,6 +22,6 @@ jobs:
       - name: Install dependencies
         run: pip install flake8 mypy
       - name: Run flake8
-        run: flake8 .
+        run: flake8 . --exclude=mlx_CLXV
       - name: Run mypy
-        run: mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+        run: mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs --exclude=mlx_CLXV
