@@ -1,0 +1,114 @@
+from pydantic.dataclasses import dataclass as pydantic_dataclass
+from pydantic import Field, model_validator
+import os
+import random
+
+
+class ConfigError(Exception):
+    """Raised when the configuration file contains invalid values."""
+
+    pass
+
+
+SENSITIVE_FILES: frozenset[str] = frozenset({
+    "Makefile", "makefile", "config.txt", "pyproject.toml",
+    "README.md", "readme.md", ".env", ".gitignore"
+})
+
+
+@pydantic_dataclass
+class MazeConfig:
+    """Validated configuration for the maze generator.
+
+    Parses and validates all parameters needed to generate a maze.
+    Entry and exit coordinates are checked to be within maze bounds.
+    If no seed is provided, a random one is generated automatically.
+
+    Attributes:
+        width: Number of columns in the maze. Must be between 2 and 46.
+        height: Number of rows in the maze. Must be between 2 and 46.
+        entry: Entry point coordinates as (x, y).
+        exit: Exit point coordinates as (x, y).
+        output_file: Path to write the maze bitmask output file.
+        perfect: If True, the maze is perfect (one unique path).
+            If False, alternative paths are added.
+        animation: If True, animate the maze generation in the terminal.
+        seed: Random seed for reproducibility. Auto-generated if None.
+        user_set_seed: True if the seed was explicitly set by the user.
+
+    Raises:
+        ConfigError: If entry or exit are out of bounds, or if the
+            output file name is reserved.
+
+    Example config file::
+
+        WIDTH = 12
+        HEIGHT = 12
+        ENTRY = 0,0
+        EXIT = 11,11
+        OUTPUT_FILE = maze.txt
+        PERFECT = true
+        ANIMATION = false
+        SEED = 1234
+    """
+
+    width: int = Field(..., ge=2, le=46)
+    height: int = Field(..., ge=2, le=46)
+    entry: tuple[int, int] = Field(...)
+    exit: tuple[int, int] = Field(...)
+    output_file: str = Field(...)
+    perfect: bool = Field(False)
+    animation: bool = Field(False)
+    seed: int = Field(random.randint(0, 999999))
+    user_set_seed: bool = Field(False)
+
+    @model_validator(mode="after")
+    def entry_validator(self) -> "MazeConfig":
+        """Validate entry, exit coordinates and output file name.
+
+        Checks that entry and exit are within maze bounds, and that
+        the output file is not a reserved name. Also generates a random
+        seed if none was provided, and sets user_set_seed accordingly.
+
+        Returns:
+            The validated MazeConfig instance.
+
+        Raises:
+            ConfigError: If any validation check fails.
+        """
+        entry_x, entry_y = self.entry
+        exit_x, exit_y = self.exit
+
+        errors: list[str] = []
+
+        if entry_x >= self.width or entry_y >= self.height:
+            errors.append(
+                f"Entry {self.entry} out of the limits:"
+                f" ({self.width}, {self.height})"
+            )
+
+        if exit_x >= self.width or exit_y >= self.height:
+            errors.append(
+                f"Exit {self.exit} out of the limits:"
+                f" ({self.width}, {self.height})"
+            )
+
+        if self.output_file in SENSITIVE_FILES:
+            errors.append(
+                f"Output file name '{self.output_file}' is reserved."
+            )
+
+        if ".." in self.output_file or self.output_file.startswith("/"):
+            errors.append(
+                f"Output file path '{self.output_file}' is not allowed."
+            )
+
+        if os.path.basename(self.output_file) in SENSITIVE_FILES:
+            errors.append(
+                f"Output file name '{self.output_file}' is reserved."
+            )
+
+        if errors:
+            raise ConfigError("; ".join(errors))
+
+        return self
