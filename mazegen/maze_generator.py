@@ -33,9 +33,10 @@ def enough_space(func: Callable[..., None]) -> Callable[..., None]:
 
         if term_lines >= maze_lines and term_cols >= maze_cols:
             func(self)
-        elif self.first_frame:
+        elif self.first_frame and not self.no_space_printed:
             self.max_size()
             self.print_no_space()
+            self.no_space_printed = True
 
         return None
 
@@ -117,6 +118,7 @@ class MazeGenerator:
     colour: str
     output: str
     seed: int
+    no_space_printed: bool = False
     output_filename: str
     no_print_msg: str = ("\nThe maze is too large to render "
                          "in the terminal. "
@@ -790,6 +792,7 @@ class MazeGenerator:
         self.colour = ""
         self.first_frame = True
         self.output_filename = output_file
+        self.no_space_printed = False
 
         self._validate_state()
 

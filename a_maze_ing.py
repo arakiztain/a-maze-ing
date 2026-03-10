@@ -1,7 +1,7 @@
 import sys
 from maze.config_parser import parse_config
 from mazegen.maze_config import MazeConfig
-from mazegen.MazeGenerator import MazeGenerator
+from mazegen.maze_generator import MazeGenerator
 import random
 import subprocess
 
@@ -73,7 +73,7 @@ def cli_loop(
                 # os.system("python3 maze/render_mazeMLX.py &")
                 if not mlx_proc[0]:
                     mlx_proc[0] = subprocess.Popen(
-                        ["python3", "maze/render_mazeMLX.py",
+                        ["python3", "maze/render_maze_mlx.py",
                          config.output_file]
 
                     )
